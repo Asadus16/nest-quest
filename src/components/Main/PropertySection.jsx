@@ -7,7 +7,7 @@ import { useSelector } from "react-redux";
 import arrow_right from "../../asset/Icons_svg/arrow-right.svg";
 import arrow_left from "../../asset/Icons_svg/arrow-left.svg";
 
-const PropertySection = ({ title, city, country, limit = 10, offset = 0 }) => {
+const PropertySection = ({ title, city, country, limit = 10, offset = 0, isFirst = false }) => {
   const [scrollPosition, setScrollPosition] = useState(0);
   const scrollContainerRef = useRef(null);
   const { userData, userFavListing: favListings } = useSelector((store) => store.app);
@@ -65,10 +65,34 @@ const PropertySection = ({ title, city, country, limit = 10, offset = 0 }) => {
           );
         }
         
-        // Filter out properties without images
-        const filteredResult = (result || []).filter(
-          (item) => item.images && Array.isArray(item.images) && item.images.length > 0 && item.images[0]
-        );
+        // Filter out properties without images or with invalid image URLs
+        const filteredResult = (result || []).filter((item) => {
+          if (!item.images || !Array.isArray(item.images) || item.images.length === 0) {
+            return false;
+          }
+          
+          const firstImage = item.images[0];
+          if (!firstImage) {
+            return false;
+          }
+          
+          // Check if image URL is valid (not empty, not null, and is a string)
+          if (typeof firstImage !== 'string' || firstImage.trim() === '' || firstImage === 'null' || firstImage === 'undefined') {
+            return false;
+          }
+          
+          // Check if it's a valid URL format
+          try {
+            new URL(firstImage);
+            return true;
+          } catch {
+            // If it's not a full URL, check if it starts with http/https or is a data URL
+            return firstImage.startsWith('http://') || 
+                   firstImage.startsWith('https://') || 
+                   firstImage.startsWith('data:') ||
+                   firstImage.startsWith('/');
+          }
+        });
         
         // Take only the requested limit
         const finalResult = filteredResult.slice(0, limit);
@@ -150,8 +174,8 @@ const PropertySection = ({ title, city, country, limit = 10, offset = 0 }) => {
 
   if (isLoading) {
     return (
-      <div className="w-full max-w-7xl mx-auto px-6 py-8">
-        <h2 className="text-xl font-semibold mb-4">{title}</h2>
+      <div className={`w-full max-w-7xl mx-auto px-6 py-8 ${isFirst ? '1sm:mt-0 1xz:mt-0 mt-0' : ''}`}>
+        <h2 className={`text-xl font-semibold mb-4 ${isFirst ? '1sm:mt-0 1xz:mt-0 pt-12' : ''}`}>{title}</h2>
         <div className="flex gap-4 overflow-x-auto">
           {[...Array(10)].map((_, i) => (
             <div
@@ -182,8 +206,8 @@ const PropertySection = ({ title, city, country, limit = 10, offset = 0 }) => {
         scrollContainerRef.current.clientWidth - 10;
 
   return (
-    <div className="w-full max-w-7xl mx-auto px-6 py-8 relative">
-      <div className="flex items-center justify-between mb-4">
+    <div className={`w-full max-w-7xl mx-auto px-6 py-8 relative ${isFirst ? '1sm:mt-0 1xz:mt-0 mt-0' : ''}`}>
+      <div className={`flex items-center justify-between mb-4 ${isFirst ? '1sm:mt-0 1xz:mt-0 pt-12' : ''}`}>
         <h2 className="text-xl font-semibold">{title}</h2>
         <span className="text-base text-grey">›</span>
       </div>

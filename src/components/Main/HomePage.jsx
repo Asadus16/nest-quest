@@ -56,11 +56,11 @@ const Home = () => {
         <Header headerRef={headerRef} />
       </div>
 
-      <div className={getOptionsClasses()}>
+      <div className={getOptionsClasses()} >
         <Options />
       </div>
 
-      <div className="w-full mt-[7rem] 2xl:mt-[14rem] 1sm:mt-[13rem]">
+      <div className="w-full mt-[6rem] 2xl:mt-[6rem] 1sm:mt-[13rem] 1xz:mt-[9rem]">
         {/* Property Sections */}
         <PropertySection
           title="Stay in Karachi"
@@ -68,6 +68,7 @@ const Home = () => {
           country="Pakistan"
           limit={10}
           offset={0}
+          isFirst={true}
         />
         <PropertySection
           title="Available next month in Dubai"
