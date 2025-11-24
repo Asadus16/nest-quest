@@ -145,7 +145,7 @@ const LoginForm = ({ onSubmit, onGuestLogin }) => {
         </div>
         <button
           type="submit"
-          className="w-full h-12 mt-2 rounded-lg text-white btnColor"
+          className="w-full h-12 mt-2 rounded-lg text-white bg-black hover:bg-gray-800 transition-colors"
         >
           Continue
         </button>

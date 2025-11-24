@@ -132,7 +132,7 @@ const AuthButtons = ({ auth }) => (
   <div>
     <button
       onClick={() => auth.setSignIn(true)}
-      className="w-full h-12 mt-2 rounded-lg text-white btnColor"
+      className="w-full h-12 mt-2 rounded-lg text-white bg-black"
     >
       Continue
     </button>

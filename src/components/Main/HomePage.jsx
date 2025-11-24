@@ -27,7 +27,7 @@ const Home = () => {
   const getHeaderClasses = () => {
     const baseClasses =
       "fixed transition-all duration-300 ease-in-out bg-white w-full flex items-start justify-center top-0";
-    const zIndexClass = minimize ? "z-50" : "z-10";
+    const zIndexClass = minimize ? "z-50" : "z-40";
     const heightClass = startScroll
       ? minimize
         ? "animate-collapse"
@@ -41,7 +41,7 @@ const Home = () => {
 
   const getOptionsClasses = () => {
     const baseClasses =
-      "transition-all duration-300 ease-in-out fixed z-10 w-full bg-white shadow-md 1sm:shadow-none flex-center";
+      "transition-all duration-300 ease-in-out fixed z-40 w-full bg-white shadow-md 1sm:shadow-none flex-center";
     const visibilityClass = startScroll
       ? "1md:translate-y-0 1sm:translate-y-[3rem]"
       : "1sm:-translate-y-[5.9rem] !shadow-md";

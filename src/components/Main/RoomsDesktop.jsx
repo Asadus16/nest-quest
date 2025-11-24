@@ -26,7 +26,7 @@ const Rating = ({ rating }) => (
 
 // Guest Favorite Badge component
 const GuestFavoriteBadge = () => (
-  <div className="absolute w-24 shadow-xl h-5 flex-center top-2 py-0.5 left-2 rounded-lg bg-white z-10">
+  <div className="absolute w-24 shadow-xl h-5 flex-center top-2 py-0.5 left-2 rounded-lg bg-white z-[1]">
     <span className="text-[10px] font-medium">Guest favourite</span>
   </div>
 );
@@ -54,7 +54,7 @@ const FavoriteButton = ({ item, favListings, userData }) => {
           }
         }
       }}
-      className="absolute hover:scale-110 top-3 right-3 z-20"
+      className="absolute hover:scale-110 top-3 right-3 z-[1]"
     >
       {favSvg(item?.id, favListings, userData)}
     </button>
@@ -65,7 +65,7 @@ const FavoriteButton = ({ item, favListings, userData }) => {
 const ScrollButton = ({ direction, onClick }) => (
   <button
     onClick={onClick}
-    className="z-10 bg-white hover:scale-105 w-8 flex-center hover:bg-opacity-100 bg-opacity-80 h-8 absolute hover:drop-shadow-md rounded-[50%] border-[1px] border-grey-dim"
+    className="z-[1] bg-white hover:scale-105 w-8 flex-center hover:bg-opacity-100 bg-opacity-80 h-8 absolute hover:drop-shadow-md rounded-[50%] border-[1px] border-grey-dim"
     style={{ [direction === "left" ? "left" : "right"]: "2px" }}
   >
     <img
