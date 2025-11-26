@@ -6,6 +6,7 @@ import MobileHouseCard from "./RoomsMobile";
 import { useSelector } from "react-redux";
 import arrow_right from "../../asset/Icons_svg/arrow-right.svg";
 import arrow_left from "../../asset/Icons_svg/arrow-left.svg";
+import { applyDubaiBranding } from "../../utils/dubaiBranding";
 
 const PropertySection = ({ title, city, country, limit = 10, offset = 0, isFirst = false }) => {
   const [scrollPosition, setScrollPosition] = useState(0);
@@ -14,91 +15,126 @@ const PropertySection = ({ title, city, country, limit = 10, offset = 0, isFirst
   const [localScrollPositions, setLocalScrollPositions] = useState({});
   const houseImagesRefs = useRef({});
 
+  // Helper function to validate if an image URL is valid
+  const isValidImageUrl = (url) => {
+    if (!url || typeof url !== 'string') return false;
+    
+    const trimmed = url.trim();
+    if (trimmed === '' || trimmed === 'null' || trimmed === 'undefined' || trimmed === 'null' || trimmed === 'undefined') {
+      return false;
+    }
+    
+    // Check for common invalid patterns
+    if (trimmed.includes('placeholder') || trimmed.includes('default') || trimmed.includes('no-image')) {
+      return false;
+    }
+    
+    // Check if it's a valid URL format
+    try {
+      new URL(trimmed);
+      return true;
+    } catch {
+      // If it's not a full URL, check if it starts with http/https or is a data URL or relative path
+      return trimmed.startsWith('http://') || 
+             trimmed.startsWith('https://') || 
+             trimmed.startsWith('data:image/') ||
+             (trimmed.startsWith('/') && trimmed.length > 1);
+    }
+  };
+
   const { data, isLoading, error } = useQuery({
     queryKey: ["propertySection", city, country, offset, limit],
     queryFn: async () => {
       try {
-        // Fetch more properties to account for filtering (fetch 20, filter, then take first 10)
-        const fetchLimit = limit * 2;
-        let result = await fetchRowsWithOptions(
-          null,
-          null,
-          country,
-          city,
-          offset,
-          offset + fetchLimit - 1
-        );
+        // Fetch more properties to account for filtering (fetch 3x to ensure we have enough valid ones)
+        const fetchLimit = limit * 3;
+        let allResults = [];
+        let currentOffset = offset;
+        let attempts = 0;
+        const maxAttempts = 5; // Prevent infinite loops
         
-        // If no results, try with just country
-        if (!result || result.length === 0) {
-          result = await fetchRowsWithOptions(
+        // Keep fetching until we have enough valid properties or reach max attempts
+        while (allResults.length < limit && attempts < maxAttempts) {
+          let result = await fetchRowsWithOptions(
             null,
             null,
             country,
-            null,
-            offset,
-            offset + fetchLimit - 1
-          );
-        }
-        
-        // If still no results, try with just city
-        if (!result || result.length === 0) {
-          result = await fetchRowsWithOptions(
-            null,
-            null,
-            null,
             city,
-            offset,
-            offset + fetchLimit - 1
+            currentOffset,
+            currentOffset + fetchLimit - 1
           );
+          
+          // If no results, try with just country
+          if (!result || result.length === 0) {
+            result = await fetchRowsWithOptions(
+              null,
+              null,
+              country,
+              null,
+              currentOffset,
+              currentOffset + fetchLimit - 1
+            );
+          }
+          
+          // If still no results, try with just city
+          if (!result || result.length === 0) {
+            result = await fetchRowsWithOptions(
+              null,
+              null,
+              null,
+              city,
+              currentOffset,
+              currentOffset + fetchLimit - 1
+            );
+          }
+          
+          // If still no results, fetch any properties with offset
+          if (!result || result.length === 0) {
+            result = await fetchRowsWithOptions(
+              null,
+              null,
+              null,
+              null,
+              currentOffset,
+              currentOffset + fetchLimit - 1
+            );
+          }
+          
+          if (!result || result.length === 0) {
+            break; // No more results available
+          }
+          
+          // Filter out properties without valid images
+          const validResults = (result || []).filter((item) => {
+            // Check if images array exists and has at least one image
+            if (!item.images || !Array.isArray(item.images) || item.images.length === 0) {
+              return false;
+            }
+            
+            // Check the first image
+            const firstImage = item.images[0];
+            if (!firstImage) {
+              return false;
+            }
+            
+            // Validate the image URL
+            return isValidImageUrl(firstImage);
+          });
+          
+          // Add valid results to our collection
+          allResults = [...allResults, ...validResults];
+          
+          // Move to next batch
+          currentOffset += fetchLimit;
+          attempts++;
         }
-        
-        // If still no results, fetch any properties with offset
-        if (!result || result.length === 0) {
-          result = await fetchRowsWithOptions(
-            null,
-            null,
-            null,
-            null,
-            offset,
-            offset + fetchLimit - 1
-          );
-        }
-        
-        // Filter out properties without images or with invalid image URLs
-        const filteredResult = (result || []).filter((item) => {
-          if (!item.images || !Array.isArray(item.images) || item.images.length === 0) {
-            return false;
-          }
-          
-          const firstImage = item.images[0];
-          if (!firstImage) {
-            return false;
-          }
-          
-          // Check if image URL is valid (not empty, not null, and is a string)
-          if (typeof firstImage !== 'string' || firstImage.trim() === '' || firstImage === 'null' || firstImage === 'undefined') {
-            return false;
-          }
-          
-          // Check if it's a valid URL format
-          try {
-            new URL(firstImage);
-            return true;
-          } catch {
-            // If it's not a full URL, check if it starts with http/https or is a data URL
-            return firstImage.startsWith('http://') || 
-                   firstImage.startsWith('https://') || 
-                   firstImage.startsWith('data:') ||
-                   firstImage.startsWith('/');
-          }
-        });
         
         // Take only the requested limit
-        const finalResult = filteredResult.slice(0, limit);
+        const finalResult = allResults.slice(0, limit);
+        const dubaiResults = finalResult.map(applyDubaiBranding);
         
-        console.log(`PropertySection ${title}:`, finalResult.length, 'properties found (offset:', offset, ')');
-        return finalResult;
+        console.log(`PropertySection ${title}:`, dubaiResults.length, 'properties found (offset:', offset, ')');
+        return dubaiResults;
       } catch (err) {
         console.error(`Error fetching properties for ${title}:`, err);
         return [];

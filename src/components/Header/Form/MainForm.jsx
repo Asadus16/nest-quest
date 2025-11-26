@@ -78,32 +78,38 @@ const useMinimizeButtonEffect = (
 };
 
 // Helper function to generate form classes
-const getFormClasses = (minimize, startScroll, curSelectInput) => {
+const getFormClasses = (minimize, startScroll, curSelectInput, isHomesPage = false) => {
   const styleForBefore = `before:content-[''] ${
     !startScroll
       ? minimize && curSelectInput
         ? "before:animate-bgShadow"
         : "before:bg-white"
       : "before:bg-shadow-gray"
-  } before:transition-all before:duration-[0.3s] before:rounded-full before:z-[2] ease-in-out before:h-full before:w-full before:absolute before:top-0`;
+  } before:transition-all before:duration-500 before:rounded-full before:z-[2] ease-in-out before:h-full before:w-full before:absolute before:top-0`;
 
+  // When scrolled and NOT in minimize state - apply scale with width override and reduced height
+  // Increase width for homes page to accommodate longer labels
+  const compactWidth = isHomesPage ? "w-[40rem]" : "w-[25rem]";
+  // Increased height for all pages to allow more padding
+  const compactHeight = "h-[4.5rem]";
   const onScrollProperty =
-    "translate-y-[-5.5rem] 1md:translate-x-0 translate-x-6 border-[3px] scale-[.5] self-center inline-block h-[5.7rem] shadow-[0_3px_12px_0px_rgba(0,0,0,0.1)]";
+    `1md:translate-x-0 translate-x-6 border-[2px] scale-[0.75] self-center inline-block ${compactHeight} ${compactWidth} shadow-[0_2px_8px_0px_rgba(0,0,0,0.12)]`;
+  
+  // When at top OR in minimize state - normal 100% scale
   const onScrollBack = `1md:translate-y-[0.2rem] 1sm:translate-y-[3rem] border-[1.5px] scale-100 self-center 1xz:w-auto 1smd:left-auto 1smd:right-auto 1xz:left-10 1xz:right-10 1smd:w-[53rem] h-[4rem] ${
     curSelectInput ? "" : "shadow-[0_3px_8px_0px_rgba(0,0,0,0.1)]"
   }`;
 
+  // Apply animation based on minimize state
   const animateForm = minimize ? onScrollBack : onScrollProperty;
 
   return `transition-all ${
     !minimize ? (!startScroll ? "animate-formBlur" : "") : ""
-  } ${
-    minimize ? "duration-[0.2s]" : "duration-[0.3s]"
-  } ease-in-out border-gray-250 flex ${
+  } duration-500 ease-in-out border-gray-250 flex ${
     !startScroll ? animateForm : onScrollBack
-  } mb-5 rounded-full ${
+  } ${!startScroll && !minimize ? "" : "mb-5"} rounded-full ${
     !startScroll ? "" : curSelectInput ? styleForBefore : ""
-  } absolute flex-center ${minimize ? styleForBefore : ""}`;
+  } ${!startScroll && !minimize ? "relative bg-gray-50 px-8 py-3 rounded-full" : "absolute"} flex-center ${minimize ? styleForBefore : ""}`;
 };
 
 function useModalClick(isCalendarModalOpen, openName, headerRef, setMinimize) {
@@ -141,7 +147,9 @@ const BackGroundModal = ({
       <div
         className={`${
           onHouseDetailPage ? "absolute" : "fixed top-0"
-        } opacity-40 w-full h-${minimize ? "full" : "0"} bg-black`}
+        } transition-opacity duration-300 w-full bg-black ${
+          minimize ? "opacity-40 h-full" : "opacity-0 h-0"
+        }`}
       ></div>
     </>,
     document.body
@@ -154,11 +162,12 @@ const SearchButton = ({
   onClick,
   extraClasses = "",
   width = "w-full",
+  isHomesPage = false,
 }) => {
   return (
     <button
       onClick={onClick}
-      className={`text-[1.8rem] h-[6rem] flex-center px-4 font-normal ${extraClasses}`}
+      className={`text-[1.4rem] h-[5rem] flex-center ${isHomesPage ? "px-5" : "px-3"} font-normal ${extraClasses}`}
     >
       <span
         className={`${width} text-ellipsis overflow-hidden whitespace-nowrap`}
@@ -169,30 +178,32 @@ const SearchButton = ({
   );
 };
 
-const Divider = () => <div className="w-[0.2rem] h-[3rem] bg-gray-200"></div>;
+const Divider = () => <div className="w-[0.15rem] h-[2.5rem] bg-gray-200"></div>;
 
-const GuestButton = ({ content, onClick }) => {
+const GuestButton = ({ content, onClick, isHomesPage }) => {
   return (
-    <button className="text-3xl flex-center pr-3 h-[6rem]">
+    <button className={`text-[1.4rem] flex-center ${isHomesPage ? "pr-3" : "pr-2"} h-[5rem]`}>
       <p
         onClick={onClick}
         className={`${
           content ? "text-black font-normal" : "text-gray-400 font-light"
-        } flex-center h-[6rem] w-[11rem]`}
+        } flex-center h-[5rem] ${isHomesPage ? "px-4" : "px-2"}`}
       >
-        {content ? content : "Add guests"}
+        {content ? content : isHomesPage ? "guests" : "Who"}
       </p>
       <div
         onClick={onClick}
-        className="w-[4rem] flex items-center justify-center bg-black rounded-full h-[4rem] transition-all duration-[0.2s]"
+        className="w-[3.2rem] flex items-center justify-center bg-black rounded-full h-[3.2rem] transition-all duration-300 hover:scale-105"
       >
-        <img className="scale-150" src={searchIcon} alt="search icon" />
+        <img className="scale-125" src={searchIcon} alt="search icon" />
       </div>
     </button>
   );
 };
 
 const SearchForm = ({ minimize }) => {
+  const location = useLocation();
+  const isHomesPage = location.pathname.includes("/homes");
   const dispatch = useDispatch();
   const { displaySearch, displayGuestInput, displaySearchWeek } = useSelector(
     (store) => store.form
@@ -205,27 +216,28 @@ const SearchForm = ({ minimize }) => {
 
   return (
     <div
-      className={`flex-center h-[6rem] ${
-        minimize ? "opacity-50" : "opacity-100"
-      } transition-all duration-[0.2s] ease-in-out`}
+      className={`flex-center h-[5rem] transition-all duration-300 ease-in-out`}
     >
       <SearchButton
-        label="Anywhere"
+        label={isHomesPage ? "Homes in Map Area" : "Where"}
         content={displaySearch}
         onClick={() => handleMinimize("anywhere")}
-        extraClasses="text-center max-w-[30rem] min-w-[10rem]"
+        extraClasses="text-center max-w-[18rem] min-w-[7rem]"
+        isHomesPage={isHomesPage}
       />
       <Divider />
       <SearchButton
-        label="Any week"
+        label={isHomesPage ? "Any Week" : "When"}
         content={displaySearchWeek}
         onClick={() => handleMinimize("week")}
-        width="max-w-[22rem] min-w-[9rem]"
+        width="max-w-[14rem] min-w-[6rem]"
+        isHomesPage={isHomesPage}
       />
       <Divider />
       <GuestButton
         content={displayGuestInput}
         onClick={() => handleMinimize("guest")}
+        isHomesPage={isHomesPage}
       />
     </div>
   );
@@ -241,6 +253,8 @@ const MainComponent = ({ startScroll, minimize }) => {
 
 // Main
 const MainForm = ({ headerRef }) => {
+  const location = useLocation();
+  const isHomesPage = location.pathname.includes("/homes");
   const {
     curSelectInput,
     minimizeFormBtn,
@@ -256,7 +270,7 @@ const MainForm = ({ headerRef }) => {
   const startScroll = useSelector((store) => store[sliceName]?.startScroll);
 
   const minimize = useSelector((store) => store.app.minimize);
-  const formClass = getFormClasses(minimize, startScroll, curSelectInput);
+  const formClass = getFormClasses(minimize, startScroll, curSelectInput, isHomesPage);
 
   useEffect(
     function () {
@@ -269,8 +283,11 @@ const MainForm = ({ headerRef }) => {
     [startScroll, dispatch]
   );
 
+  // Determine if form should be fixed at top when minimized and scrolling
+  const isFixedOnScroll = !startScroll && !minimize;
+  
   return (
-    <div className="flex items-center   flex-col">
+    <div className={`${isFixedOnScroll ? 'fixed top-0 left-1/2 -translate-x-1/2 z-[60] w-auto h-[6rem] flex items-center justify-center' : 'flex items-center flex-col'}`}>
       <div className={formClass}>
         {!startScroll && !minimize ? (
           <MainComponent

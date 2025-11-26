@@ -4,6 +4,7 @@ import CheckInOption from "./DatesOption";
 import CircularSlider from "./CircularSlider";
 import { useDispatch, useSelector } from "react-redux";
 import { format, addMonths } from "date-fns";
+import { useLocation } from "react-router";
 import {
   setHoverInput,
   setTextForInputDuration,
@@ -15,6 +16,7 @@ const DateDisplay = ({
   formattedStartDate,
   formatEndDate,
   handleClick,
+  isHomesPage,
 }) => {
   return (
     <div
@@ -26,7 +28,7 @@ const DateDisplay = ({
       onClick={handleClick}
     >
       <div className="flex flex-col 1smd:w-[14.8rem] items-start justify-center">
-        <p className="text-xs font-medium">When</p>
+        <p className="text-xs font-medium">{isHomesPage ? "Any Week" : "When"}</p>
         {curSelectedInput ? (
           <p className="text-sm font-medium">
             {formattedStartDate} - {formatEndDate}
@@ -40,6 +42,8 @@ const DateDisplay = ({
 };
 
 const Month = ({ modalRef, handleInputField, onlyOneTime, monthRef }) => {
+  const location = useLocation();
+  const isHomesPage = location.pathname.includes("/homes");
   const {
     startDurationDate,
     curSelectInput: curSelectedInput,
@@ -92,6 +96,7 @@ const Month = ({ modalRef, handleInputField, onlyOneTime, monthRef }) => {
             formattedStartDate={formattedStartDate}
             formatEndDate={formatEndDate}
             handleClick={handleClick}
+            isHomesPage={isHomesPage}
           ></DateDisplay>
         </div>
       </Modal.Open>

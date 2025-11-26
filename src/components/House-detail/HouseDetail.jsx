@@ -16,6 +16,7 @@ import LongFooter from "./LongFooter";
 import { Link } from "react-router-dom";
 import { differenceInDays, format, isSameMonth } from "date-fns";
 import { updateBookingDates } from "../../payment/CheckoutForm";
+import { applyDubaiBranding } from "../../utils/dubaiBranding";
 
 // custom hook
 const useFormattedDateRange = (startDate, endDate) => {
@@ -71,7 +72,7 @@ const PriceDetails = ({
     <div className="flex  flex-col">
       {dateSelected && (
         <span className="text-normal font-medium">
-          ${calculatePrice()} <span className="font-light text-sm">night</span>
+          AED {calculatePrice()} <span className="font-light text-sm">night</span>
         </span>
       )}
       {dateSelected ? (
@@ -174,7 +175,7 @@ const useScrollBehavior = (dispatch) => {
 };
 
 // Custom hook for handling house data
-const useHouseData = (id, houseInfo) => {
+const useHouseData = (id) => {
   const dispatch = useDispatch();
 
   const { isLoading, data } = useQuery({
@@ -184,10 +185,11 @@ const useHouseData = (id, houseInfo) => {
 
   useEffect(() => {
     if (data) {
-      dispatch(setHouseInfo({ ...houseInfo, [id]: data }));
+      const branded = applyDubaiBranding(data);
+      dispatch(setHouseInfo({ id, data: branded }));
       dispatch(setIsLoading(false));
     }
-  }, [data, houseInfo, dispatch, isLoading, id]);
+  }, [data, dispatch, id]);
 
   return { isLoading, data };
 };
@@ -213,15 +215,16 @@ const HeaderWrapper = ({
   startScroll,
   animateHeaderClass1,
   animateHeaderClass2,
+  showNav,
 }) => (
   <div
     ref={headerRef}
     id="header"
-    className={`bg-white hidden ${
+    className={`bg-white ${showNav ? "hidden" : "hidden 1xz:flex"} ${
       minimize ? "z-50" : "z-10"
     } transition-all duration-[0.3s] ease-in-out ${
       !startScroll ? animateHeaderClass1 : animateHeaderClass2
-    } w-full 1xz:flex items-start justify-center`}
+    } w-full items-start justify-center`}
   >
     <Header headerRef={headerRef} />
   </div>
@@ -233,6 +236,7 @@ const HouseDetail = () => {
   const { id } = useParams();
   const dispatch = useDispatch();
   const headerRef = useRef();
+  const [showNav, setShowNav] = useState(false);
 
   const onHouseDetailPage = location.pathname.includes("/house/");
   const sliceName = onHouseDetailPage ? "houseSlice" : "app";
@@ -251,7 +255,23 @@ const HouseDetail = () => {
 
   // Custom hooks
   useScrollBehavior(dispatch);
-  useHouseData(id, houseInfo);
+  useHouseData(id);
+
+  // Track scroll position to control navbar and header visibility
+  useEffect(() => {
+    function handleScroll() {
+      if (window.scrollY > 566) {
+        setShowNav(true);
+      } else {
+        setShowNav(false);
+      }
+    }
+
+    window.addEventListener("scroll", handleScroll);
+    return () => {
+      window.removeEventListener("scroll", handleScroll);
+    };
+  }, []);
 
   useEffect(() => {
     updateBookingDates(id);
@@ -301,6 +321,7 @@ const HouseDetail = () => {
         startScroll={startScroll}
         animateHeaderClass1={animateHeaderClass1}
         animateHeaderClass2={animateHeaderClass2}
+        showNav={showNav}
       />
 
       <div className="w-full hidden 1xz:block">

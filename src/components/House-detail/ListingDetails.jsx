@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import { useParams } from "react-router";
 import HouseDescription from "./HouseDescription";
 import SleepBedDetail from "./SleepBedDetail";
 
@@ -23,7 +24,7 @@ const HouseInfo = ({ houseInfo, houseInfoDetails, isLoading }) => {
         {/* Details Section */}
         <HouseDetails
           isLoading={isLoading}
-          houseInfoDetails={houseInfoDetails}
+          houseInfo={houseInfo}
         />
         {/* Rating Section */}
         <RatingSection
@@ -65,9 +66,7 @@ const LoadingSkeleton = ({ width, height }) => (
 );
 
 /* House Details Component */
-const HouseDetails = ({ isLoading }) => {
-  const { houseInfo } = useSelector((store) => store.houseDetail);
-
+const HouseDetails = ({ isLoading, houseInfo }) => {
   const [houseInfoDetails, setHouseInfoDetails] = useState([]);
 
   useEffect(() => {

@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import star from "../../asset/Icons_svg/star.svg";
 import { useDispatch, useSelector } from "react-redux";
 import { setShowLogin } from "../../redux/AppSlice";
-import { Link } from "react-router-dom";
+import { Link, useParams } from "react-router-dom";
 
 // A reusable component for navigation links
 const NavLink = ({ onClick, href, label }) => (
@@ -18,11 +18,11 @@ const NavLink = ({ onClick, href, label }) => (
 // Component for showing the price and reviews section
 const PriceAndReviews = ({ houseInfo, houseRating, reviewsCount }) => (
   <div className="h-full gap-5 flex items-center">
-    <div className="flex flex-col justify-center gap-y-1">
-      <div className="flex items-end gap-x-1">
-        <span className="font-medium text-base">${houseInfo?.price}</span>
-        <span className="text-sm font-light">night</span>
-      </div>
+      <div className="flex flex-col justify-center gap-y-1">
+        <div className="flex items-end gap-x-1">
+          <span className="font-medium text-base">AED {houseInfo?.price}</span>
+          <span className="text-sm font-light">night</span>
+        </div>
       <div className="flex gap-x-1 items-center">
         <img src={star} className="h-3 w-3" alt="Rating" />
         <span className="text-xs font-medium">
@@ -44,6 +44,9 @@ const PriceAndReviews = ({ houseInfo, houseRating, reviewsCount }) => (
 const ReserveButton = ({ houseInfo }) => {
   const dispatch = useDispatch();
   let userData = useSelector((store) => store.app.userData);
+  
+  if (!houseInfo || !houseInfo.id) return null;
+  
   const handleClick = (e) => {
     if (!userData) {
       e.preventDefault();
@@ -53,7 +56,7 @@ const ReserveButton = ({ houseInfo }) => {
 
   return (
     <Link to={userData ? `/${houseInfo.id}/book` : "#"} onClick={handleClick}>
-      <button className="rounded-lg flex-center bg-black w-[9.5rem] h-12">
+      <button className="rounded-full flex-center bg-black w-[9.5rem] h-12">
         <span className="text-white">Reserve</span>
       </button>
     </Link>
@@ -89,14 +92,31 @@ const NavbarChild = ({ isVisible, houseInfo }) => {
         />
       </div>
 
-      {/* Show price and reviews only when isVisible is false */}
-      {!isVisible && (
-        <PriceAndReviews
-          houseInfo={houseInfo}
-          houseRating={houseRating}
-          reviewsCount={reviewsCount}
-        />
-      )}
+      <div className="h-full flex items-center gap-5">
+        {/* Show price and reviews only when isVisible is false */}
+        {!isVisible && (
+          <div className="flex flex-col justify-center gap-y-1">
+            <div className="flex items-end gap-x-1">
+              <span className="font-medium text-base">AED {houseInfo?.price}</span>
+              <span className="text-sm font-light">night</span>
+            </div>
+            <div className="flex gap-x-1 items-center">
+              <img src={star} className="h-3 w-3" alt="Rating" />
+              <span className="text-xs font-medium">
+                {houseRating && formatSingleDigit(houseInfo?.house_rating)}
+              </span>
+              <span className="flex items-center justify-center">
+                <span className="w-[2px] h-[2px] bg-current rounded-full"></span>
+              </span>
+              <span className="text-xs font-extralight">
+                {reviewsCount && houseInfo?.rating_count}
+              </span>
+            </div>
+          </div>
+        )}
+        {/* Always show Reserve button on the right */}
+        <ReserveButton houseInfo={houseInfo} />
+      </div>
     </nav>
   );
 };
@@ -133,8 +153,10 @@ function formatSingleDigit(number) {
 
 const NavBar = () => {
   const [showNav, setShowNav] = useState(false);
+  const { id } = useParams();
 
-  const { isVisible, houseInfo } = useSelector((store) => store.houseDetail);
+  const { isVisible, houseInfo: allHouseInfo } = useSelector((store) => store.houseDetail);
+  const houseInfo = allHouseInfo[id];
 
   useEffect(() => {
     function handleScroll() {

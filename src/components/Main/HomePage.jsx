@@ -1,5 +1,5 @@
-import React, { useRef } from "react";
-import { useSelector } from "react-redux";
+import React, { useRef, useEffect, useCallback } from "react";
+import { useSelector, useDispatch } from "react-redux";
 import { useQuery } from "@tanstack/react-query";
 
 import { SpeedInsights } from "@vercel/speed-insights/react";
@@ -11,11 +11,14 @@ import InspirationForGetaways from "./InspirationForGetaways";
 import LongFooter from "../House-detail/LongFooter";
 import MobileFooter from "../Footer/MobileFooter";
 import { getAllRows } from "../../api/apiRooms";
+import { setStartScroll, setMinimize } from "../../redux/AppSlice";
+import { setActiveInput } from "../../redux/mainFormSlice";
 
 import "../../input.css";
 
 const Home = () => {
   const { startScroll, minimize, userData } = useSelector((state) => state.app);
+  const dispatch = useDispatch();
 
   const headerRef = useRef(null);
 
@@ -24,9 +27,42 @@ const Home = () => {
     queryFn: getAllRows,
   });
 
+  // Handle scroll to update startScroll state
+  const handleWindowScroll = useCallback(() => {
+    const currentScrollPosition = window.scrollY;
+
+    // Handle UI state updates
+    dispatch(setMinimize(false));
+    dispatch(setActiveInput(""));
+
+    if (currentScrollPosition > 0) {
+      dispatch(setStartScroll(false));
+    } else if (currentScrollPosition < 22) {
+      dispatch(setStartScroll(true));
+    }
+  }, [dispatch]);
+
+  // Set up scroll listener and check initial scroll position
+  useEffect(() => {
+    // Check initial scroll position on mount
+    const initialScrollPosition = window.scrollY;
+    if (initialScrollPosition > 0) {
+      dispatch(setStartScroll(false));
+    } else {
+      dispatch(setStartScroll(true));
+    }
+
+    // Add scroll event listener
+    window.addEventListener("scroll", handleWindowScroll);
+    
+    return () => {
+      window.removeEventListener("scroll", handleWindowScroll);
+    };
+  }, [dispatch, handleWindowScroll]);
+
   const getHeaderClasses = () => {
     const baseClasses =
-      "fixed transition-all duration-300 ease-in-out bg-white w-full flex items-start justify-center top-0";
+      "fixed transition-all duration-300 ease-in-out bg-gray-50 w-full flex items-start justify-center top-0";
     const zIndexClass = minimize ? "z-50" : "z-40";
     const heightClass = startScroll
       ? minimize
@@ -41,13 +77,18 @@ const Home = () => {
 
   const getOptionsClasses = () => {
     const baseClasses =
-      "transition-all duration-300 ease-in-out fixed z-40 w-full bg-white shadow-md 1sm:shadow-none flex-center";
-    const visibilityClass = startScroll
-      ? "1md:translate-y-0 1sm:translate-y-[3rem]"
-      : "1sm:-translate-y-[5.9rem] !shadow-md";
+      "transition-all duration-300 ease-in-out fixed z-40 w-full bg-gray-50 shadow-md 1sm:shadow-none flex-center";
+    
+    // Hide the filters bar when scrolled (form is compact)
+    if (!startScroll) {
+      return `${baseClasses} opacity-0 pointer-events-none translate-y-[-100%]`;
+    }
+    
+    // Show the filters bar when at top
+    const visibilityClass = "1md:translate-y-0 1sm:translate-y-[3rem]";
     const positionClass = "1sm:top-[10.8rem] top-[5.7rem]";
 
-    return `${baseClasses} ${visibilityClass} ${positionClass}`;
+    return `${baseClasses} ${visibilityClass} ${positionClass} opacity-100`;
   };
 
   return (
@@ -63,9 +104,9 @@ const Home = () => {
       <div className="w-full mt-[6rem] 2xl:mt-[6rem] 1sm:mt-[13rem] 1xz:mt-[9rem]">
         {/* Property Sections */}
         <PropertySection
-          title="Stay in Karachi"
-          city="Karachi"
-          country="Pakistan"
+          title="Stay in Dubai"
+          city="Al Awir"
+          country="Dubai"
           limit={10}
           offset={0}
           isFirst={true}
@@ -78,9 +119,9 @@ const Home = () => {
           offset={10}
         />
         <PropertySection
-          title="Homes in Kuala Lumpur"
-          city="Kuala Lumpur"
-          country="Malaysia"
+          title="Homes in Dubai"
+          city="Al Madam"
+          country="Dubai"
           limit={10}
           offset={20}
         />

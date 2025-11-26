@@ -12,13 +12,27 @@ const HouseDetailSlice = createSlice({
   initialState: HouseDetail,
   reducers: {
     setHouseInfo(state, action) {
-      const updatedInfo = { ...state.houseInfo, ...action.payload };
-      if (updatedInfo.price && updatedInfo.country) {
-        if (updatedInfo.country === "United States") {
-          updatedInfo.price = Math.ceil(updatedInfo.price / 83);
-        }
+      const { id, data, ...legacyPayload } = action.payload || {};
+
+      // Legacy support: if no id/data provided, merge payload directly (previous behavior)
+      if (!id || !data) {
+        state.houseInfo = { ...state.houseInfo, ...legacyPayload };
+        return;
       }
-      state.houseInfo = updatedInfo;
+
+      const normalizedData = { ...data };
+      if (
+        normalizedData.price &&
+        normalizedData.country &&
+        normalizedData.country === "United States"
+      ) {
+        normalizedData.price = Math.ceil(normalizedData.price / 83);
+      }
+
+      state.houseInfo = {
+        ...state.houseInfo,
+        [id]: normalizedData,
+      };
     },
     setIsLoading(state, action) {
       state.isLoading = action.payload;

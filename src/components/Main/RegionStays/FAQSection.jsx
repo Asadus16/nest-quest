@@ -62,7 +62,7 @@ const FAQSection = ({ regionName }) => {
             {openIndex === index && (
               <div className="mt-6 text-grey">
                 <p>
-                  This is a sample answer for the question. In a real
+                  In a real
                   implementation, you would fetch the actual answer from your
                   data source.
                 </p>
@@ -76,4 +76,3 @@ const FAQSection = ({ regionName }) => {
 };
 
 export default FAQSection;
-

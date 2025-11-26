@@ -130,7 +130,7 @@ const LongFooter = () => {
   return (
     <footer
       className={`w-full ${
-        isHouseDetailPage || isHomePage ? "" : "hidden"
+        isHouseDetailPage || isHomePage ? "bg-gray-50" : "hidden"
       } 1xz:inline-grid h-full border-t border-t-grey-dim`}
     >
   

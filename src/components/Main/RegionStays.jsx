@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { useParams } from "react-router-dom";
 import Header from "../Header/Header";
 import Footer from "../Footer/Footer";
@@ -17,6 +17,8 @@ import DestinationsExplore from "./RegionStays/DestinationsExplore";
 
 const RegionStays = () => {
   const { regionName } = useParams();
+  const [isScrolled, setIsScrolled] = useState(false);
+  
   const formattedRegionName = regionName
     ? regionName
         .split("-")
@@ -24,9 +26,25 @@ const RegionStays = () => {
         .join(" ")
     : "";
 
+  // Handle scroll to hide/show header
+  useEffect(() => {
+    const handleScroll = () => {
+      if (window.scrollY > 50) {
+        setIsScrolled(true);
+      } else {
+        setIsScrolled(false);
+      }
+    };
+
+    window.addEventListener("scroll", handleScroll);
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
+
   return (
     <div className="flex flex-col min-h-screen bg-white">
-      <div className="fixed top-0 left-0 right-0 z-50 bg-white">
+      <div className={`fixed top-0 left-0 right-0 z-50 bg-white transition-transform duration-300 ${
+        isScrolled ? "-translate-y-full" : "translate-y-0"
+      }`}>
         <Header />
       </div>
 
@@ -35,7 +53,7 @@ const RegionStays = () => {
         <SearchCard regionName={formattedRegionName} />
 
         {/* Top-rated vacation rentals */}
-        <div className="max-w-7xl mx-auto px-6 py-12">
+        <div className="max-w-7xl mx-auto px-6 pt-4 pb-12">
           <TopRatedRentals regionName={formattedRegionName} />
         </div>
 

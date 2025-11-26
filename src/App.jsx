@@ -12,6 +12,7 @@ import CheckoutForm from "./payment/CheckoutForm";
 import Profile from "./components/Main/Profile";
 import LoginPage from "./components/Main/LoginPage";
 import RegionStays from "./components/Main/RegionStays";
+import RegionHomes from "./components/Main/RegionStays/RegionHomes";
 
 const queryClient = new QueryClient({});
 
@@ -44,6 +45,10 @@ const router = createBrowserRouter([
   {
     path: "/:regionName/stays",
     element: <RegionStays></RegionStays>,
+  },
+  {
+    path: "/:regionName/homes",
+    element: <RegionHomes></RegionHomes>,
   },
   {
     path: "/:id/book",

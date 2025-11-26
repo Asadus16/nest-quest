@@ -9,7 +9,7 @@ const TopRatedRentals = ({ regionName }) => {
       {
         id: 1,
         image:
-          "https://images.unsplash.com/photo-1511963211574-e9be5fd01779?w=900&q=80",
+          "https://images.unsplash.com/photo-1505691938895-1758d7feb511?w=900&q=80",
         title: "Apartment in Downtown Dubai",
         rating: 4.99,
         reviews: 158,
@@ -210,6 +210,9 @@ const TopRatedRentals = ({ regionName }) => {
                 src={rental.image}
                 alt={rental.title}
                 className="w-full h-64 object-cover group-hover:scale-105 transition-transform duration-300"
+                onError={(e) => {
+                  e.target.src = "https://images.unsplash.com/photo-1505691938895-1758d7feb511?w=900&q=80";
+                }}
               />
             </div>
             <div>

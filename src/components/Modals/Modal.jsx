@@ -62,6 +62,8 @@ function Window({ children, name, modalRef, resetRef }) {
 
     const targetEl = document.getElementById("destination-form");
     const addGuestEl = document.getElementById("addGuest-form");
+    const checkInEl = document.getElementById("checkIn-form");
+    const checkOutEl = document.getElementById("checkOut-form");
     let addGuestModal = openName === "addGuest";
 
     let calendarModalWidth = [
@@ -82,7 +84,17 @@ function Window({ children, name, modalRef, resetRef }) {
         width: modalWidth,
       });
     } else {
-      const relevantEl = addGuestModal ? addGuestEl : targetEl;
+      let relevantEl;
+      if (addGuestModal) {
+        relevantEl = addGuestEl;
+      } else if (openName === "checkIn" && checkInEl) {
+        relevantEl = checkInEl;
+      } else if (openName === "checkOut" && checkOutEl) {
+        relevantEl = checkOutEl;
+      } else {
+        relevantEl = targetEl;
+      }
+      
       if (relevantEl) {
         const rect = relevantEl.getBoundingClientRect();
         let addGuestPosition = addGuestModal ? 416 - rect.width : 0;
@@ -141,12 +153,12 @@ function Window({ children, name, modalRef, resetRef }) {
   }, [updatePosition, name, onlyOneTime, openName, startScroll]);
 
   let modalStyle = {
-    checkIn: `fixed z-10 1smd:w-[53rem]  bg-black bg-opacity-50 rounded-[2rem]`,
-    month: `fixed z-10 w-[53rem] bg-black bg-opacity-50 rounded-[2rem]`,
-    flexible: `fixed w-[53rem] z-10 bg-black bg-opacity-50 rounded-[2rem]`,
-    destination: `z-10 bg-black bg-opacity-50 rounded-[2rem] w-[26rem]`,
-    checkOut: `fixed z-10 1smd:w-[53rem] bg-black bg-opacity-50 rounded-[2rem]`,
-    addGuest: `fixed z-10 w-[26rem] bg-black bg-opacity-50 rounded-[2rem]`,
+    checkIn: `fixed z-[60] 1smd:w-[53rem]  bg-black bg-opacity-50 rounded-[2rem]`,
+    month: `fixed z-[60] w-[53rem] bg-black bg-opacity-50 rounded-[2rem]`,
+    flexible: `fixed w-[53rem] z-[60] bg-black bg-opacity-50 rounded-[2rem]`,
+    destination: `z-[60] bg-black bg-opacity-50 rounded-[2rem] w-[26rem]`,
+    checkOut: `fixed z-[60] 1smd:w-[53rem] bg-black bg-opacity-50 rounded-[2rem]`,
+    addGuest: `fixed z-[60] w-[26rem] bg-black bg-opacity-50 rounded-[2rem]`,
   };
 
   useEffect(() => {
@@ -180,7 +192,7 @@ function Window({ children, name, modalRef, resetRef }) {
       ref={ref}
     >
       <div
-        className="bg-white overflow-x-hidden shadow-modalShadow rounded-[2rem] z-100"
+        className="bg-white overflow-x-hidden shadow-modalShadow rounded-[2rem] relative z-[60]"
         ref={modalRef}
       >
         {cloneElement(children)}

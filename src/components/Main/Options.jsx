@@ -219,12 +219,12 @@ const ScrollButton = ({ fetchNext, direction, onClick }) => (
     <div
       className={`absolute ${
         direction === "left" ? "-left-1" : "right-[21.7rem]"
-      } hidden 1sm:flex items-center justify-center w-10 h-20 bg-white`}
+      } hidden 1sm:flex items-center justify-center w-10 h-20 bg-gray-50`}
     >
       <div
         className={`absolute ${
           direction === "left" ? "left-4" : "-left-4"
-        } w-full h-full bg-white ${
+        } w-full h-full bg-gray-50 ${
           direction === "left" ? "blur-right" : "blur-left"
         }`}
       ></div>
@@ -234,7 +234,7 @@ const ScrollButton = ({ fetchNext, direction, onClick }) => (
       onClick={onClick}
       className={`absolute hidden 1sm:flex items-center justify-center top-[30%] z-50 ${
         direction === "left" ? "left-0" : "right-[22rem]"
-      } h-9 w-9 border-grey-dim bg-white hover:scale-110 hover:drop-shadow-md rounded-[50%] border-[1px]`}
+      } h-9 w-9 border-grey-dim bg-gray-50 hover:scale-110 hover:drop-shadow-md rounded-[50%] border-[1px]`}
     >
       <img
         src={direction === "left" ? arrow_left : arrow_right}
@@ -333,9 +333,9 @@ const Options = () => {
 
   return (
     <div
-      className={`1sm:bg-white ${
+      className={`bg-gray-50 ${
         minimize ? "hidden" : ""
-      } z-10 justify-self-center w-full 1sm:w-[calc(100%-5rem)] 1xl:w-[calc(100%-10rem)] mx-auto`}
+      } z-50 justify-self-center w-full 1sm:w-[calc(100%-5rem)] 1xl:w-[calc(100%-10rem)] mx-auto`}
     >
       <div
         className={`h-auto  flex w-full relative items-center justify-between space-x-10`}

@@ -1,4 +1,5 @@
-import React from "react";
+import React, { useEffect } from "react";
+import { useLocation } from "react-router-dom";
 import Modal from "../../Modals/Modal";
 import Destination from "./FormFields/Destination";
 import { useDispatch, useSelector } from "react-redux";
@@ -82,6 +83,9 @@ const ClearButton = ({ onClick }) => (
 
 // Main component
 const DestinationForm = ({ onlyOneTime, buttonRef, inputRef, modalRef }) => {
+  const location = useLocation();
+  const isHomesPage = location.pathname.includes("/homes");
+  
   const {
     curSelectInput,
     destinationInputVal,
@@ -129,6 +133,8 @@ const DestinationForm = ({ onlyOneTime, buttonRef, inputRef, modalRef }) => {
                 ${
                   curSelectInput === "destination"
                     ? "rounded-full w-full bg-white"
+                    : curSelectInput && curSelectInput !== "destination"
+                    ? "rounded-full w-full bg-shadow-gray"
                     : ""
                 }
                 ${
@@ -136,11 +142,11 @@ const DestinationForm = ({ onlyOneTime, buttonRef, inputRef, modalRef }) => {
                     ? ""
                     : "before:hover:bg-grey-light-50"
                 }
-                before:hover:opacity-40 py-[0.8rem] h-[3.85rem] px-[2rem] cursor-pointer`}
+                before:hover:opacity-40 py-[0.8rem] h-[3.85rem] ${isHomesPage ? "px-[2.5rem]" : "px-[2rem]"} cursor-pointer`}
             >
               <div className="flex justify-between items-center">
                 <div>
-                  <div className="text-xs font-medium">Where</div>
+                  <div className="text-xs font-medium">{isHomesPage ? "Homes in Map Area" : "Where"}</div>
                   <DestinationInput
                     ref={inputRef}
                     value={getInputValue()}

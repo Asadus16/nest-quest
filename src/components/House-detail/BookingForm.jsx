@@ -89,21 +89,21 @@ const PricingDetails = ({ price, numOfDays }) => {
   return (
     <div className="w-full mt-6">
       <div className="flex justify-between">
-        <span className="font-light">{`$${price} x ${Math.abs(
+        <span className="font-light">{`AED ${price} x ${Math.abs(
           numOfDays
         )}`}</span>
         <span className="font-light">
-          ${Math.ceil(price * Math.abs(numOfDays))}
+          AED {Math.ceil(price * Math.abs(numOfDays))}
         </span>
       </div>
       <div className="flex py-4 border-b border-grey-dim justify-between">
         <span className="font-light">Service fee</span>
-        <span className="font-light">${Math.ceil(serviceFee)}</span>
+        <span className="font-light">AED {Math.ceil(serviceFee)}</span>
       </div>
       <div className="flex justify-between  border-grey-dim pt-6">
         <span className="font-medium">Total before taxes</span>
         <span className="font-medium">
-          ${Math.ceil(Math.ceil(price * Math.abs(numOfDays)) + serviceFee)}
+          AED {Math.ceil(Math.ceil(price * Math.abs(numOfDays)) + serviceFee)}
         </span>
       </div>
     </div>
@@ -208,7 +208,7 @@ const BookingForm = () => {
           ) : (
             <div className="max-w-[23.14rem] min-w-64 w-full shadow-priceCardShadow border-[1px] p-6 rounded-xl border-grey-dim ">
               <span className="text-2xl font-light">
-                ${houseInfo?.price} <span className="text-base">night</span>
+                AED {houseInfo?.price} <span className="text-base">night</span>
               </span>
               <DateSelection
                 scrollToSection={scrollToSection}

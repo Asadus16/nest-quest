@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { addMonths, format } from "date-fns";
+import { useLocation } from "react-router";
 import Modal from "../../Modals/Modal";
 import CheckInOption from "./DatesOption";
 import FlexibleStayOptions from "./FlexibleStayOptions";
@@ -119,6 +120,8 @@ const FlexibleInputWrapper = ({
 
 // Main Flexible component
 const Flexible = ({ modalRef, handleInputField, flexibleRef, onlyOneTime }) => {
+  const location = useLocation();
+  const isHomesPage = location.pathname.includes("/homes");
   const { curSelectInput: currentInput } = useSelector((store) => store.form);
   const { selectedMonthsInfo, stayDuration } = useFlexibleDates();
   const { handleMouseEnter, handleMouseLeave } = useHoverHandling();
@@ -141,7 +144,7 @@ const Flexible = ({ modalRef, handleInputField, flexibleRef, onlyOneTime }) => {
             onClick={(e) => handleInputField(e.target, "flexible")}
           >
             <div className="flex text-sm font-medium items-start justify-center 1smd:w-[15rem] flex-col">
-              <span className="text-xs font-medium">When</span>
+              <span className="text-xs font-medium">{isHomesPage ? "Any Week" : "When"}</span>
               <span className="overflow-hidden text-sm font-medium text-ellipsis whitespace-nowrap 1smd:w-[15rem]">
                 <FlexibleContent
                   currentInput={currentInput}

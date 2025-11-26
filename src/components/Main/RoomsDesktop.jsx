@@ -170,7 +170,7 @@ const HouseCard = ({
         </p>
         <p className="font-light text-grey text-[10px]">16-21 May</p>
         <p className="text-xs font-medium">
-          ${Math.ceil(item.price / 83)}
+          AED {Math.ceil(item.price / 83)}
           <span className="font-light text-xs"> night</span>
         </p>
       </div>

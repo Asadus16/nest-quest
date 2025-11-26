@@ -2,8 +2,7 @@ import React, { useRef } from "react";
 import AddGuestForm from "./AddGuestForm";
 import Flexible from "./Flexible";
 import Month from "./Month";
-import CheckInDateForm from "./CheckInDateForm";
-import CheckOutDateForm from "./CheckOutDateForm";
+import WhenDateForm from "./WhenDateForm";
 import DestinationForm from "./DestinationForm";
 import { useSelector } from "react-redux";
 
@@ -56,10 +55,9 @@ const SearchForm = ({
   const { minimize, startScroll } = useSelector((store) => store.app);
   const containerClasses = `1smd:flex w-full 1xz:grid 1xz:grid-cols-3 z-20 justify-center ${
     !minimize && !startScroll ? "scale-[0.6] opacity-50" : "scale-100 opacity-1"
-  } items-center transition-all duration-[0.4s]`;
+  } items-center transition-all duration-[0.4s] ${!startScroll && !minimize ? "flex-1" : ""}`;
   let onlyOneTime = useRef(true);
-  const checkInResetRef = useRef();
-  const checkOutResetRef = useRef();
+  const whenResetRef = useRef();
   const addGuestResetRef = useRef();
   const {
     curSelectInput,
@@ -68,84 +66,76 @@ const SearchForm = ({
     EndDateToShow,
     dateOption,
   } = useSelector((store) => store.form);
+  
+  const isCompact = !startScroll && !minimize;
+  
   return (
     <div className={containerClasses}>
-      <DestinationForm
-        onlyOneTime={onlyOneTime}
-        buttonRef={buttonRef}
-        inputRef={inputRef}
-        modalRef={modalRef}
-      />
-
-      <div className="flex 1smd:justify-center 1xz:justify-between items-center">
-        <FormDivider
-          curSelectInput={curSelectInput}
-          hoverInput={hoverInput}
-          activeInputs={["destination", "checkIn", "month", "flexible"]}
-        />
-
-        {(dateOption === "dates" || dateOption === "") && (
-          <>
-            <CheckInDateForm
-              onlyOneTime={onlyOneTime}
-              checkInRef={checkInRef}
-              checkInResetRef={checkInResetRef}
-              modalRef={modalRef}
-              curSelectInput={curSelectInput}
-              startDateToShow={startDateToShow}
-              handleInputField={handleInputField}
-            />
-
-            <FormDivider
-              curSelectInput={curSelectInput}
-              hoverInput={hoverInput}
-              activeInputs={["checkOut", "checkIn"]}
-            />
-
-            <CheckOutDateForm
-              onlyOneTime={onlyOneTime}
-              checkOutResetRef={checkOutResetRef}
-              checkOutRef={checkOutRef}
-              modalRef={modalRef}
-              curSelectInput={curSelectInput}
-              EndDateToShow={EndDateToShow}
-              handleInputField={handleInputField}
-            />
-          </>
-        )}
-
-        {dateOption === "month" && (
-          <Month
-            onlyOneTime={onlyOneTime}
-            monthRef={monthRef}
-            modalRef={modalRef}
-            handleInputField={handleInputField}
-          />
-        )}
-
-        {dateOption === "flexible" && (
-          <Flexible
-            onlyOneTime={onlyOneTime}
-            flexibleRef={flexibleRef}
-            handleInputField={handleInputField}
-            modalRef={modalRef}
-          />
-        )}
-
-        <FormDivider
-          curSelectInput={curSelectInput}
-          hoverInput={hoverInput}
-          activeInputs={["checkOut", "addGuest", "month", "flexible"]}
+      <div className={isCompact ? "flex-1" : ""}>
+        <DestinationForm
+          onlyOneTime={onlyOneTime}
+          buttonRef={buttonRef}
+          inputRef={inputRef}
+          modalRef={modalRef}
         />
       </div>
 
-      <AddGuestForm
-        onlyOneTime={onlyOneTime}
-        handleInputField={handleInputField}
-        addGuestRef={addGuestRef}
-        addGuestResetRef={addGuestResetRef}
-        modalRef={modalRef}
-      />
+      <div className={`flex 1smd:justify-center 1xz:justify-between items-center ${isCompact ? "flex-1" : ""}`}>
+        <FormDivider
+          curSelectInput={curSelectInput}
+          hoverInput={hoverInput}
+          activeInputs={["destination", "checkIn", "checkOut", "when", "month", "flexible"]}
+        />
+
+        <div className={isCompact ? "flex-1" : ""}>
+          {(dateOption === "dates" || dateOption === "") && (
+            <WhenDateForm
+              onlyOneTime={onlyOneTime}
+              whenRef={checkInRef}
+              whenResetRef={whenResetRef}
+              modalRef={modalRef}
+              curSelectInput={curSelectInput}
+              startDateToShow={startDateToShow}
+              EndDateToShow={EndDateToShow}
+              handleInputField={handleInputField}
+            />
+          )}
+
+          {dateOption === "month" && (
+            <Month
+              onlyOneTime={onlyOneTime}
+              monthRef={monthRef}
+              modalRef={modalRef}
+              handleInputField={handleInputField}
+            />
+          )}
+
+          {dateOption === "flexible" && (
+            <Flexible
+              onlyOneTime={onlyOneTime}
+              flexibleRef={flexibleRef}
+              handleInputField={handleInputField}
+              modalRef={modalRef}
+            />
+          )}
+        </div>
+
+        <FormDivider
+          curSelectInput={curSelectInput}
+          hoverInput={hoverInput}
+          activeInputs={["checkIn", "checkOut", "when", "addGuest", "month", "flexible"]}
+        />
+      </div>
+
+      <div className={isCompact ? "flex-1" : ""}>
+        <AddGuestForm
+          onlyOneTime={onlyOneTime}
+          handleInputField={handleInputField}
+          addGuestRef={addGuestRef}
+          addGuestResetRef={addGuestResetRef}
+          modalRef={modalRef}
+        />
+      </div>
     </div>
   );
 };

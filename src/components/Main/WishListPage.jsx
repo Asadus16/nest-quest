@@ -116,7 +116,7 @@ const WishlistItem = ({ item, favListings, userData, svg }) => {
             </p>
             <p className="font-light text-grey text-[15px]">16-21 May</p>
             <p className="text-[15px] font-medium">
-              ${Math.ceil(item.price / 83)}
+              AED {Math.ceil(item.price / 83)}
               <span className="font-light text-[15px]"> night</span>
             </p>
           </div>

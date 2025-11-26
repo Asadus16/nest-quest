@@ -1,4 +1,5 @@
-import React from "react";
+import React, { useEffect } from "react";
+import { useLocation } from "react-router-dom";
 import Modal from "../../Modals/Modal";
 import { useDispatch, useSelector } from "react-redux";
 import { setActiveInput, setHoverInput } from "../../../redux/mainFormSlice";
@@ -73,9 +74,10 @@ const GuestInputDisplay = ({
   curSelectInput,
   guestPlural,
   extraGuest,
+  isHomesPage,
 }) => (
-  <div className="flex flex-col 1xz:pl-6 1smd:pl-0 justify-center items-start">
-    <div className="text-xs font-medium">Who</div>
+    <div className="flex flex-col 1xz:pl-6 1smd:pl-0 justify-center items-start">
+    <div className="text-xs font-medium">{isHomesPage ? "guests" : "Who"}</div>
     <div
       className={`1smd:w-[6.62rem] flex justify-between items-center outline-none focus:outline-none  
       ${
@@ -100,31 +102,36 @@ const GuestInputDisplay = ({
 );
 
 // Search Button Component
-const SearchButton = ({ curSelectInput, onClick }) => (
-  <div
-    onClick={onClick}
-    className={`hover:bg-gray-800 1xz:mr-2  ${
-      curSelectInput
-        ? "1smd:w-[8rem] 1xz:w-[3rem]  z-50"
-        : "w-[3rem] 1smd:mr-0 z-50 "
-    } hover:cursor-pointer flex items-center ${
-      curSelectInput
-        ? "1xz:justify-center 1smd:justify-start"
-        : "justify-center"
-    } duration-200 ease-out ${
-      curSelectInput ? "bg-black ml-[-1.6rem] mr-2" : "bg-black ml-[-0.5rem]"
-    } rounded-full h-[3rem]`}
-  >
-    <img
-      className={curSelectInput ? "1smd:pl-2 1smd:pr-1" : ""}
-      src={searchIcon}
-      alt="Search"
-    />
-    {curSelectInput && (
-      <p className="text-center 1xz:hidden 1smd:block text-white">Search</p>
-    )}
-  </div>
-);
+const SearchButton = ({ curSelectInput, onClick, isCompact }) => {
+  const buttonSize = isCompact ? "w-[1.5rem] h-[1.5rem]" : curSelectInput ? "1smd:w-[8rem] 1xz:w-[3rem] h-[3rem]" : "w-[3rem] h-[3rem]";
+  const iconScale = isCompact ? "scale-[0.5]" : "";
+  
+  return (
+    <div
+      onClick={onClick}
+      className={`hover:bg-gray-800 1xz:mr-2 ${buttonSize} ${
+        curSelectInput && !isCompact
+          ? "z-50"
+          : "1smd:mr-0 z-50"
+      } hover:cursor-pointer flex items-center ${
+        curSelectInput && !isCompact
+          ? "1xz:justify-center 1smd:justify-start"
+          : "justify-center"
+      } duration-200 ease-out ${
+        curSelectInput && !isCompact ? "bg-black ml-[-1.6rem] mr-2" : "bg-black ml-[-0.5rem]"
+      } rounded-full`}
+    >
+      <img
+        className={`${curSelectInput && !isCompact ? "1smd:pl-2 1smd:pr-1" : ""} ${iconScale}`}
+        src={searchIcon}
+        alt="Search"
+      />
+      {curSelectInput && !isCompact && (
+        <p className="text-center 1xz:hidden 1smd:block text-white">Search</p>
+      )}
+    </div>
+  );
+};
 
 const AddGuestForm = ({
   onlyOneTime,
@@ -133,8 +140,12 @@ const AddGuestForm = ({
   addGuestResetRef,
   modalRef,
 }) => {
+  const location = useLocation();
+  const isHomesPage = location.pathname.includes("/homes");
+  
   const dispatch = useDispatch();
   const { formState, handleSearchClick, handleCrossClick } = useGuestForm();
+  const { startScroll, minimize } = useSelector((store) => store.app);
 
   const {
     curSelectInput,
@@ -145,6 +156,8 @@ const AddGuestForm = ({
     infantCount,
     petsCount: petCount,
   } = formState;
+  
+  const isCompact = !startScroll && !minimize;
 
   // Helper function to check if any guests are selected
   const hasAnyGuests = () => {
@@ -169,6 +182,8 @@ const AddGuestForm = ({
         className={`flex 1xz:relative 1smd:static 1smd:w-[17.7rem] ${
           curSelectInput === "addGuest"
             ? "rounded-full bg-white shadow-AddGuestShadow"
+            : curSelectInput && curSelectInput !== "addGuest"
+            ? "rounded-full bg-shadow-gray"
             : ""
         } 1xz:justify-between 1smd:justify-center items-center`}
       >
@@ -186,7 +201,7 @@ const AddGuestForm = ({
                   ? ""
                   : "before:hover:bg-grey-light-50"
               }
-              justify-between 1smd:before:left-[35.20rem] before:rounded-full before:hover:opacity-40 py-[0.8rem] h-[3.85rem] 1smd:px-[1.5rem] cursor-pointer`}
+              justify-between 1smd:before:left-[35.20rem] before:rounded-full before:hover:opacity-40 py-[0.8rem] h-[3.85rem] ${isHomesPage ? "1smd:px-[2rem]" : "1smd:px-[1.5rem]"} cursor-pointer`}
             >
               <GuestInputDisplay
                 adultCount={adultCount}
@@ -196,6 +211,7 @@ const AddGuestForm = ({
                 curSelectInput={curSelectInput}
                 guestPlural={guestPlural}
                 extraGuest={extraGuest}
+                isHomesPage={isHomesPage}
               />
 
               {hasAnyGuests() && curSelectInput === "addGuest" && (
@@ -215,6 +231,7 @@ const AddGuestForm = ({
         <SearchButton
           curSelectInput={curSelectInput}
           onClick={handleSearchClick}
+          isCompact={isCompact}
         />
       </div>
 
