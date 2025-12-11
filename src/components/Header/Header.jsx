@@ -1,15 +1,16 @@
 import icon from "../../asset/nestLogo.svg";
 import MainForm from "./Form/MainForm";
-import { useSelector } from "react-redux";
+import { useSelector, useDispatch } from "react-redux";
 import { useLocation } from "react-router";
 import UserDashboard from "./UserDashboard";
 import AuthenticationModal from "./AuthenticationModal";
 import MobileForm from "./Form/MobileForm";
+import HostModal from "../Modals/HostModal";
+import { setShowHostModal } from "../../redux/AppSlice";
 
 function Header({ headerRef }) {
   const location = useLocation();
-  const hostPortalUrl =
-    import.meta?.env?.VITE_HOST_PORTAL_URL || "https://pms-fe-two.vercel.app/";
+  const dispatch = useDispatch();
 
   // Determine if the user is on specific pages based on the URL path
   const isHouseDetailPage = location.pathname.includes("/house/");
@@ -61,14 +62,12 @@ function Header({ headerRef }) {
             </>
           ) : (
             <>
-              <a
-                href={hostPortalUrl}
-                target="_blank"
-                rel="noopener noreferrer"
+              <button
+                onClick={() => dispatch(setShowHostModal(true))}
                 className="text-sm h-[2.5rem] cursor-pointer hidden 1smm:flex items-center justify-center rounded-full hover:bg-shadow-gray-light text-nowrap max-w-36 px-4 py-2 w-full font-[450]"
               >
                 Host Your Properties
-              </a>
+              </button>
 
 
               <UserDashboard />
@@ -77,6 +76,7 @@ function Header({ headerRef }) {
         </div>
 
         <AuthenticationModal />
+        <HostModal />
       </div>
 
       <MobileFormSection isStaysPage={isStaysPage} />

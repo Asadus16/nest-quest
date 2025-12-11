@@ -208,12 +208,12 @@ const AuthenticationModal = () => {
         <div className="items-center border-b-[1px] border-grey-light-50 justify-between flex 1xz:w-[35.5rem] w-full px-6 h-[3.9rem]">
           <button
             onClick={() => dispatch(setShowLogin(false))}
-            className="w-6 h-6 flex items-center justify-center cursor-pointer hover:rounded-full hover:bg-grey-dim"
+            className="w-6 h-6 flex items-center justify-center cursor-pointer hover:rounded-full hover:bg-grey-dim transition-none"
           >
             <img src={cross} className="h-4 w-4" alt="" />
           </button>
-          <span className="font-semibold">Log in or sign up</span>
-          <div className="px-4" />
+          <span className="font-semibold text-base leading-none select-none">Log in or sign up</span>
+          <div className="w-6 h-6" />
         </div>
         <LoginForm onSubmit={handleLogin} onGuestLogin={handleGuestLogin} />
       </div>
