@@ -159,28 +159,37 @@ const HouseCard = ({
 
   const handleMouseLeave = () => dispatch(setHoveredItem(null));
 
-  const renderHouseInfo = () => (
-    <div className="flex w-full justify-between items-start mt-2">
-      <div className="w-[80%]">
-        <p className="text-ellipsis whitespace-nowrap overflow-hidden text-xs w-[90%] font-medium">
-          {item["house-title"]}
-        </p>
-        <p className="font-light text-grey text-[10px]">
-          {Math.ceil(item.price / 83 + 150)} kilometers away
-        </p>
-        <p className="font-light text-grey text-[10px]">16-21 May</p>
-        <p className="text-xs font-medium">
-          AED {Math.ceil(item.price / 83)}
-          <span className="font-light text-xs"> night</span>
-        </p>
+  const renderHouseInfo = () => {
+    // Get price label based on property type
+    const getPriceLabel = () => {
+      if (item.priceType === 'month') return 'month';
+      if (item.priceType === 'total') return '';
+      return 'night';
+    };
+
+    return (
+      <div className="flex w-full justify-between items-start mt-2">
+        <div className="w-[80%]">
+          <p className="text-ellipsis whitespace-nowrap overflow-hidden text-xs w-[90%] font-medium">
+            {item["house-title"]}
+          </p>
+          <p className="font-light text-grey text-[10px]">
+            {item.city || 'Dubai'}, {item.country || 'UAE'}
+          </p>
+          <p className="font-light text-grey text-[10px]">{item.type ? item.type.charAt(0).toUpperCase() + item.type.slice(1) : 'Property'}</p>
+          <p className="text-xs font-medium">
+            AED {Math.ceil(item.price / 83)}
+            {getPriceLabel() && <span className="font-light text-xs"> {getPriceLabel()}</span>}
+          </p>
+        </div>
+        <Rating rating={item.house_rating} />
       </div>
-      <Rating rating={item.house_rating} />
-    </div>
-  );
+    );
+  };
 
   return (
     <a
-      href={`/house/${item.id}`}
+      href={`/property/${item.id}`}
       target="_blank"
       rel="noopener noreferrer"
       className="block"

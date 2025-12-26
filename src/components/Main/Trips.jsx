@@ -36,7 +36,7 @@ const TripCard = ({ tripData, paymentsData }) => {
 
   return (
     <div className=" shadow-2xl p-5 rounded-xl">
-      <Link to={`/house/${tripData.id}`} key={tripData.id}>
+      <Link to={`/property/${tripData.id}`} key={tripData.id}>
         <img
           className="rounded-[20px] w-full h-full object-cover"
           src={tripData.images?.[0]}

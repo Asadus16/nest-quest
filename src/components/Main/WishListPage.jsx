@@ -75,7 +75,7 @@ const WishlistItem = ({ item, favListings, userData, svg }) => {
 
   return (
     <a
-      href={`/house/${item.id}`}
+      href={`/property/${item.id}`}
       target="_blank"
       rel="noopener noreferrer"
       className="block"

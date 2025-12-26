@@ -13,7 +13,7 @@ function Header({ headerRef }) {
   const dispatch = useDispatch();
 
   // Determine if the user is on specific pages based on the URL path
-  const isHouseDetailPage = location.pathname.includes("/house/");
+  const isHouseDetailPage = location.pathname.includes("/property/");
   const isWishListPage = location.pathname.includes("/wishlist");
   const isTripsPage = location.pathname.includes("trips");
   const isSignInPage = location.pathname.includes("/login");

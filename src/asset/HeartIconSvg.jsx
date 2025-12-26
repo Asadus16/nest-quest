@@ -1,7 +1,7 @@
 export function svg(itemId, favListings, userData) {
   const path = window.location.pathname;
 
-  let onHouseDetailPage = path.includes("/house");
+  let onHouseDetailPage = path.includes("/property");
 
   let isFavorite = favListings?.includes(itemId) && userData;
 

@@ -16,17 +16,26 @@ export function mapBackendPropertyToFrontend(backendProperty) {
     .map(photo => photo.url)
     .filter(url => url && url.trim() !== '');
 
-  // Get pricing - prefer short_term_rent pricing
+  // Get pricing - check all pricing types
   let price = 0;
+  let priceType = 'night'; // Default display type
   const pricings = backendProperty.pricings || [];
   const shortTermPricing = pricings.find(p => p.property_usage === 'short_term_rent');
   const monthlyPricing = pricings.find(p => p.property_usage === 'monthly_rent');
+  const salePricing = pricings.find(p => p.property_usage === 'sale');
 
   if (shortTermPricing && shortTermPricing.nightly_base_price) {
+    // Short-term rent: use nightly price directly
     price = parseFloat(shortTermPricing.nightly_base_price);
+    priceType = 'night';
   } else if (monthlyPricing && monthlyPricing.rental_amount) {
-    // Convert monthly to daily (approximate)
-    price = parseFloat(monthlyPricing.rental_amount) / 30;
+    // Monthly rent: show monthly price (not converted to daily)
+    price = parseFloat(monthlyPricing.rental_amount);
+    priceType = 'month';
+  } else if (salePricing && salePricing.selling_price) {
+    // Sale: show selling price
+    price = parseFloat(salePricing.selling_price);
+    priceType = 'total';
   }
 
   // Build amenities/filter string from amenities array
@@ -50,15 +59,16 @@ export function mapBackendPropertyToFrontend(backendProperty) {
 
   // Build the property object in frontend format
   return {
-    // Use 'backend_' prefix to identify backend properties
-    id: `backend_${backendProperty.id}`,
-    originalId: backendProperty.id,
+    // Use numeric ID directly (no prefix) for clean URLs
+    id: backendProperty.id,
     isBackendProperty: true,
 
     // Core property info
     'house-title': title,
     images: images.length > 0 ? images : ['https://placehold.co/400x300/e2e8f0/64748b?text=No+Image'],
-    price: price * 83, // Convert to match the frontend's price conversion (AED to USD * 83)
+    price: price * 83, // Multiply by 83 so frontend's division gives correct AED price
+    priceType: priceType, // 'night', 'month', or 'total'
+    rawPrice: price, // Actual price in AED for direct use
 
     // Rating - default since backend doesn't have ratings yet
     house_rating: 4.5,
@@ -113,6 +123,19 @@ export function mapBackendPropertyToFrontend(backendProperty) {
     house_manual: backendProperty.description?.house_manual || '',
     neighborhood: backendProperty.description?.neighborhood || '',
 
+    // Fields used by detail page components
+    house_description: backendProperty.description?.long_description ||
+                       backendProperty.description?.short_description || '',
+    house_location: `${backendProperty.city || 'Dubai'}, ${backendProperty.country || 'UAE'}`,
+    location_description: backendProperty.description?.neighborhood ||
+                          backendProperty.description?.transit ||
+                          backendProperty.description?.access || '',
+    host_description: backendProperty.description?.interaction || '',
+
+    // Space details for property info
+    space_description: backendProperty.description?.space || '',
+    notes: backendProperty.description?.notes || '',
+
     // WiFi
     wifi_name: backendProperty.wifi_name,
     wifi_password: backendProperty.wifi_password,
@@ -125,6 +148,20 @@ export function mapBackendPropertyToFrontend(backendProperty) {
 
     // Pricing details (for detail page)
     pricingDetails: shortTermPricing || monthlyPricing || null,
+
+    // Short-term rental pricing breakdown
+    cleaning_fee: shortTermPricing?.cleaning_fee ? parseFloat(shortTermPricing.cleaning_fee) : 0,
+    cleaning_fee_tax_percentage: shortTermPricing?.cleaning_fee_tax_percentage ? parseFloat(shortTermPricing.cleaning_fee_tax_percentage) : 0,
+    security_deposit: shortTermPricing?.security_deposit ? parseFloat(shortTermPricing.security_deposit) : 0,
+    extra_guest_fee: shortTermPricing?.extra_guest_fee ? parseFloat(shortTermPricing.extra_guest_fee) : 0,
+    pet_fee: shortTermPricing?.pet_fee ? parseFloat(shortTermPricing.pet_fee) : 0,
+    tax_percentage: shortTermPricing?.tax_percentage ? parseFloat(shortTermPricing.tax_percentage) : 0,
+    weekend_price: shortTermPricing?.weekend_price ? parseFloat(shortTermPricing.weekend_price) : 0,
+    weekly_price: shortTermPricing?.weekly_price ? parseFloat(shortTermPricing.weekly_price) : 0,
+
+    // Monthly rental pricing
+    deposit_required: monthlyPricing?.deposit_required ? parseFloat(monthlyPricing.deposit_required) : 0,
+    service_charges_rent: monthlyPricing?.service_charges_rent ? parseFloat(monthlyPricing.service_charges_rent) : 0,
 
     // Store original backend data for reference
     _backendData: backendProperty,
@@ -143,25 +180,28 @@ export function mapBackendPropertiesToFrontend(backendProperties) {
 
 /**
  * Checks if a property ID belongs to the backend
+ * Now deprecated - use houseInfo.isBackendProperty instead
  * @param {string|number} id - Property ID
  * @returns {boolean}
+ * @deprecated
  */
 export function isBackendPropertyId(id) {
-  return String(id).startsWith('backend_');
+  // No longer using prefix - check isBackendProperty flag on the data instead
+  return false;
 }
 
 /**
- * Extracts the original backend ID from a prefixed ID
- * @param {string|number} id - Property ID (possibly with backend_ prefix)
- * @returns {string} Original ID without prefix
+ * Gets the property ID for API calls
+ * @param {string|number} id - Property ID
+ * @returns {string} ID for API use
  */
-export function getOriginalBackendId(id) {
-  return String(id).replace('backend_', '');
+export function getPropertyId(id) {
+  return String(id);
 }
 
 export default {
   mapBackendPropertyToFrontend,
   mapBackendPropertiesToFrontend,
   isBackendPropertyId,
-  getOriginalBackendId,
+  getPropertyId,
 };
