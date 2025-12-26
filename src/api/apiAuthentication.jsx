@@ -2,6 +2,7 @@ import { store } from "../redux/Store";
 import supabase from "./Supabase";
 
 import { setUserData, setUserFavListing } from "../redux/AppSlice";
+import { getAuthenticatedUser, guestLogout, isAuthenticated, getAuthToken } from "./apiGuestAuth";
 
 export const signInWithGoogle = async () => {
   // Get the current URL
@@ -38,9 +39,21 @@ export const signInWithGoogle = async () => {
 };
 
 export const getUserLogout = async () => {
+  // Check if user is authenticated via guest API
+  if (isAuthenticated()) {
+    try {
+      await guestLogout();
+    } catch (error) {
+      console.error("Guest logout error:", error);
+    }
+  }
+
+  // Clear Supabase session
+  let { error } = await supabase.auth.signOut();
+
+  // Clear all local storage and Redux state
   localStorage.clear();
   store.dispatch(setUserData(null));
-  let { error } = await supabase.auth.signOut();
 
   if (error) {
     return error;
@@ -50,6 +63,34 @@ export const getUserLogout = async () => {
 };
 
 export const getUserData = async () => {
+  // First check for guest authentication
+  if (isAuthenticated()) {
+    try {
+      const response = await getAuthenticatedUser();
+      if (response.data && response.data.user) {
+        // Store guest user data in Redux
+        // Transform guest user data to match expected format
+        const guestUser = {
+          id: response.data.user.id,
+          email: response.data.user.email,
+          name: response.data.user.name,
+          phone: response.data.user.phone,
+          roles: response.data.user.roles,
+          email_verified_at: response.data.user.email_verified_at,
+          // Add a flag to identify this as a guest user
+          isGuest: true,
+          authToken: getAuthToken(),
+        };
+        store.dispatch(setUserData(guestUser));
+        return guestUser;
+      }
+    } catch (error) {
+      console.error("Error fetching guest user:", error);
+      // If guest auth fails, try Supabase
+    }
+  }
+
+  // Fallback to Supabase authentication
   const {
     data: { user },
   } = await supabase.auth.getUser();
