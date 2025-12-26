@@ -22,6 +22,9 @@ let appState = {
   mobileNavOption: "Explore",
   cancelGuestUpdate: false,
   showMobileForm: false,
+  showHostModal: false,
+  hostModalStep: 1, // 1 = selection step, 2 = next step
+  hostProgress: 0, // Progress percentage for host onboarding (0-100)
 };
 
 const AppSlice = createSlice({
@@ -112,6 +115,15 @@ const AppSlice = createSlice({
     setItemId(state, action) {
       state.itemId = action.payload;
     },
+    setShowHostModal(state, action) {
+      state.showHostModal = action.payload;
+    },
+    setHostModalStep(state, action) {
+      state.hostModalStep = action.payload;
+    },
+    setHostProgress(state, action) {
+      state.hostProgress = action.payload;
+    },
   },
 });
 
@@ -138,6 +150,9 @@ export const {
   setScrollPositions,
   setCity,
   setInputSearchIds,
+  setShowHostModal,
+  setHostModalStep,
+  setHostProgress,
 } = AppSlice.actions;
 
 export default AppSlice.reducer;
