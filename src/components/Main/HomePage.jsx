@@ -103,6 +103,7 @@ const Home = () => {
 
       <div className="w-full mt-[6rem] 2xl:mt-[6rem] 1sm:mt-[13rem] 1xz:mt-[9rem]">
         {/* Property Sections */}
+        {/* Stay in Dubai - Uses Supabase data */}
         <PropertySection
           title="Stay in Dubai"
           city="Al Awir"
@@ -110,20 +111,21 @@ const Home = () => {
           limit={10}
           offset={0}
           isFirst={true}
+          useBackend={false}
         />
+        {/* Available Properties - Uses Backend data (page 1) */}
         <PropertySection
-          title="Available next month in Dubai"
-          city="Dubai"
-          country="United Arab Emirates"
+          title="Available Properties"
           limit={10}
-          offset={10}
+          useBackend={true}
+          backendPage={1}
         />
+        {/* More Backend Properties (page 2 - will show empty state if not enough properties) */}
         <PropertySection
-          title="Homes in Dubai"
-          city="Al Madam"
-          country="Dubai"
+          title="Featured Listings"
           limit={10}
-          offset={20}
+          useBackend={true}
+          backendPage={2}
         />
 
         {/* Inspiration for future getaways */}

@@ -1,6 +1,8 @@
 import React, { useRef, useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { fetchRowsWithOptions } from "../../api/apiRooms";
+import { getBackendProperties } from "../../api/apiBackend";
+import { mapBackendPropertiesToFrontend } from "../../utils/propertyMapper";
 import HouseCard from "./RoomsDesktop";
 import MobileHouseCard from "./RoomsMobile";
 import { useSelector } from "react-redux";
@@ -8,7 +10,7 @@ import arrow_right from "../../asset/Icons_svg/arrow-right.svg";
 import arrow_left from "../../asset/Icons_svg/arrow-left.svg";
 import { applyDubaiBranding } from "../../utils/dubaiBranding";
 
-const PropertySection = ({ title, city, country, limit = 10, offset = 0, isFirst = false }) => {
+const PropertySection = ({ title, city, country, limit = 10, offset = 0, isFirst = false, useBackend = false, backendPage = 1 }) => {
   const [scrollPosition, setScrollPosition] = useState(0);
   const scrollContainerRef = useRef(null);
   const { userData, userFavListing: favListings } = useSelector((store) => store.app);
@@ -43,16 +45,34 @@ const PropertySection = ({ title, city, country, limit = 10, offset = 0, isFirst
   };
 
   const { data, isLoading, error } = useQuery({
-    queryKey: ["propertySection", city, country, offset, limit],
+    queryKey: ["propertySection", city, country, offset, limit, useBackend, backendPage],
     queryFn: async () => {
       try {
+        // If using backend, fetch from PMS backend API
+        if (useBackend) {
+          const response = await getBackendProperties(backendPage, limit);
+
+          if (!response.data || response.data.length === 0) {
+            console.log(`PropertySection ${title}: No backend properties found`);
+            return [];
+          }
+
+          // Map backend properties to frontend format
+          const mappedProperties = mapBackendPropertiesToFrontend(response.data);
+
+          // For backend properties, show all (including those without images - they'll use placeholder)
+          console.log(`PropertySection ${title}:`, mappedProperties.length, 'backend properties found');
+          return mappedProperties;
+        }
+
+        // Original Supabase fetch logic
         // Fetch more properties to account for filtering (fetch 3x to ensure we have enough valid ones)
         const fetchLimit = limit * 3;
         let allResults = [];
         let currentOffset = offset;
         let attempts = 0;
         const maxAttempts = 5; // Prevent infinite loops
-        
+
         // Keep fetching until we have enough valid properties or reach max attempts
         while (allResults.length < limit && attempts < maxAttempts) {
           let result = await fetchRowsWithOptions(
@@ -63,7 +83,7 @@ const PropertySection = ({ title, city, country, limit = 10, offset = 0, isFirst
             currentOffset,
             currentOffset + fetchLimit - 1
           );
-          
+
           // If no results, try with just country
           if (!result || result.length === 0) {
             result = await fetchRowsWithOptions(
@@ -75,7 +95,7 @@ const PropertySection = ({ title, city, country, limit = 10, offset = 0, isFirst
               currentOffset + fetchLimit - 1
             );
           }
-          
+
           // If still no results, try with just city
           if (!result || result.length === 0) {
             result = await fetchRowsWithOptions(
@@ -87,7 +107,7 @@ const PropertySection = ({ title, city, country, limit = 10, offset = 0, isFirst
               currentOffset + fetchLimit - 1
             );
           }
-          
+
           // If still no results, fetch any properties with offset
           if (!result || result.length === 0) {
             result = await fetchRowsWithOptions(
@@ -99,40 +119,40 @@ const PropertySection = ({ title, city, country, limit = 10, offset = 0, isFirst
               currentOffset + fetchLimit - 1
             );
           }
-          
+
           if (!result || result.length === 0) {
             break; // No more results available
           }
-          
+
           // Filter out properties without valid images
           const validResults = (result || []).filter((item) => {
             // Check if images array exists and has at least one image
             if (!item.images || !Array.isArray(item.images) || item.images.length === 0) {
               return false;
             }
-            
+
             // Check the first image
             const firstImage = item.images[0];
             if (!firstImage) {
               return false;
             }
-            
+
             // Validate the image URL
             return isValidImageUrl(firstImage);
           });
-          
+
           // Add valid results to our collection
           allResults = [...allResults, ...validResults];
-          
+
           // Move to next batch
           currentOffset += fetchLimit;
           attempts++;
         }
-        
+
         // Take only the requested limit
         const finalResult = allResults.slice(0, limit);
         const dubaiResults = finalResult.map(applyDubaiBranding);
-        
+
         console.log(`PropertySection ${title}:`, dubaiResults.length, 'properties found (offset:', offset, ')');
         return dubaiResults;
       } catch (err) {
@@ -229,13 +249,12 @@ const PropertySection = ({ title, city, country, limit = 10, offset = 0, isFirst
     return null;
   }
 
-  if (!data || data.length === 0) {
-    console.log(`No data for ${title} - city: ${city}, country: ${country}`);
-    return null;
-  }
+  // Show empty state instead of hiding the section
+  const hasData = data && Array.isArray(data) && data.length > 0;
 
-  const canScrollLeft = scrollPosition > 0;
+  const canScrollLeft = hasData && scrollPosition > 0;
   const canScrollRight =
+    hasData &&
     scrollContainerRef.current &&
     scrollPosition <
       scrollContainerRef.current.scrollWidth -
@@ -245,7 +264,7 @@ const PropertySection = ({ title, city, country, limit = 10, offset = 0, isFirst
     <div className={`w-full max-w-7xl mx-auto px-6 py-8 relative ${isFirst ? '1sm:mt-0 1xz:mt-0 mt-0' : ''}`}>
       <div className={`flex items-center justify-between mb-4 ${isFirst ? '1sm:mt-0 1xz:mt-0 pt-12' : ''}`}>
         <h2 className="text-xl font-semibold">{title}</h2>
-        <span className="text-base text-grey">›</span>
+        {hasData && <span className="text-base text-grey">›</span>}
       </div>
 
       <div className="relative">
@@ -263,7 +282,7 @@ const PropertySection = ({ title, city, country, limit = 10, offset = 0, isFirst
           className="flex gap-3 overflow-x-auto scroll-smooth hide-scrollbar"
           style={{ scrollBehavior: "smooth" }}
         >
-          {data && Array.isArray(data) && data.length > 0 ? (
+          {hasData ? (
             data.map((item, index) => (
             <div key={item.id} className="flex-shrink-0 w-52 1md:w-56 h-full">
               <div className="hidden 1md:block h-full">
@@ -293,7 +312,9 @@ const PropertySection = ({ title, city, country, limit = 10, offset = 0, isFirst
             </div>
           ))
           ) : (
-            <div className="text-grey text-sm">No properties available</div>
+            <div className="w-full py-8 text-center text-grey">
+              <p className="text-sm">No properties available at the moment</p>
+            </div>
           )}
         </div>
 
