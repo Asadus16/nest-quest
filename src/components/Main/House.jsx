@@ -349,9 +349,11 @@ const House = () => {
     userFavListing: favListings,
     city,
     inputSearchIds: ids,
+    backendSearchResults,
+    useBackendSearch,
   } = useSelector((store) => store.app);
 
-  // Fetch house data
+  // Fetch house data (only if not using backend search)
   const {
     houseListingData,
     fetchNextPage,
@@ -360,12 +362,17 @@ const House = () => {
     status,
   } = useHouseListingData(ids, selectedIcon, selectedCountry, city);
 
+  // Use backend search results if available, otherwise use Supabase results
+  const displayData = useBackendSearch && backendSearchResults.length > 0
+    ? { pages: [backendSearchResults] }
+    : houseListingData;
+
   const { handleScroll, handleWindowScroll, handleScrollBtn } =
     useScrollHandlers({
       setLocalScrollPositions,
-      hasNextPage,
-      isFetchingNextPage,
-      fetchNextPage,
+      hasNextPage: useBackendSearch ? false : hasNextPage,
+      isFetchingNextPage: false,
+      fetchNextPage: () => {},
       houseImagesRefs,
       containerRef,
       showMore,
@@ -395,10 +402,14 @@ const House = () => {
       ref={containerRef}
     >
       <div className="grid    gap-x-6 1md:grid-cols-three-col grid-cols-1 gap-y-10 1lg:my-grid-cols-four-col 2xl:my-grid-cols-six-col justify-center w-full items-start 1xs:grid-cols-two-col 1lg:gap-y-4 xl:gap-y-8  1md:gap-y-10 1xs:gap-y-10 grid-flow-row">
-        {status === "pending" ? (
+        {!useBackendSearch && status === "pending" ? (
           <SkeletonLoaderList></SkeletonLoaderList>
+        ) : useBackendSearch && backendSearchResults.length === 0 ? (
+          <div className="col-span-full text-center py-10">
+            <p className="text-lg text-gray-600">No properties found matching your search criteria.</p>
+          </div>
         ) : (
-          houseListingData?.pages.flatMap((page) =>
+          displayData?.pages.flatMap((page) =>
             page.map((item, index) =>
               isSmallScreen ? (
                 <MobileHouseCard
@@ -429,7 +440,7 @@ const House = () => {
           )
         )}
       </div>
-      {!!houseListingData && showMore?.current && hasNextPage && (
+      {!useBackendSearch && !!houseListingData && showMore?.current && hasNextPage && (
         <ContinueExploring
           selectedIcon={selectedIcon}
           fetchNextPage={fetchNextPage}
