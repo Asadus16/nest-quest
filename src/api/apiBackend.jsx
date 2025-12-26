@@ -43,33 +43,28 @@ export async function getBackendProperties(page = 1, perPage = 15) {
  * Calls: GET /api/properties/{id}
  * @param {number|string} id - Property ID
  * @returns {Promise<Object|null>}
+ * @throws {Error} If property not found or request fails
  */
 export async function getBackendPropertyById(id) {
-  try {
-    // Remove the 'backend_' prefix if present
-    const propertyId = String(id).replace('backend_', '');
+  const propertyId = String(id);
 
-    const response = await fetch(
-      `${API_BASE_URL}/properties/${propertyId}`,
-      {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-          'Accept': 'application/json',
-        },
-      }
-    );
-
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
+  const response = await fetch(
+    `${API_BASE_URL}/properties/${propertyId}`,
+    {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+      },
     }
+  );
 
-    const result = await response.json();
-    return result.data || null;
-  } catch (error) {
-    console.error('Error fetching backend property:', error);
-    return null;
+  if (!response.ok) {
+    throw new Error(`Backend property not found: ${response.status}`);
   }
+
+  const result = await response.json();
+  return result.data || null;
 }
 
 /**

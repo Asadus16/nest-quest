@@ -94,7 +94,7 @@ const PropertyCard = ({ item, favListings, userData, dispatch, onHover }) => {
 
   return (
     <div
-      onClick={() => navigate(`/house/${item.id}`)}
+      onClick={() => navigate(`/property/${item.id}`)}
       onMouseEnter={() => onHover?.(item.id)}
       onMouseLeave={() => onHover?.(null)}
       className="cursor-pointer group"
@@ -370,7 +370,7 @@ const RegionHomes = () => {
   }, [sheetHeight, minHeight, maxHeight]);
 
   const handleMarkerClick = (property) => {
-    navigate(`/house/${property.id}`);
+    navigate(`/property/${property.id}`);
   };
 
   const getHeaderClasses = () => {
@@ -537,7 +537,7 @@ const MobilePropertyCard = ({ item, favListings, userData, dispatch }) => {
 
   return (
     <div
-      onClick={() => navigate(`/house/${item.id}`)}
+      onClick={() => navigate(`/property/${item.id}`)}
       className="flex gap-3 cursor-pointer active:bg-gray-50 rounded-xl p-2 -mx-2"
     >
       {/* Image */}

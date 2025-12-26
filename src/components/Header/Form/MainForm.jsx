@@ -34,11 +34,11 @@ const useFormVisibility = () => {
 const useFormStateManager = () => {
   const dispatch = useDispatch();
   const location = useLocation();
-  const onHouseDetailPage = location.pathname.includes("/house/");
+  const onHouseDetailPage = location.pathname.includes("/property/");
   const sliceName = onHouseDetailPage ? "houseSlice" : "app";
 
   useEffect(() => {
-    if (location.pathname === "/house") {
+    if (location.pathname === "/property") {
       dispatch(setStartScroll(false));
     }
   }, [dispatch, location.pathname]);

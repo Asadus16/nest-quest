@@ -202,7 +202,7 @@ const TopRatedRentals = ({ regionName }) => {
         {sections[currentPage - 1].map((rental) => (
           <div
             key={rental.id}
-            onClick={() => navigate(`/house/${rental.id}`)}
+            onClick={() => navigate(`/property/${rental.id}`)}
             className="cursor-pointer group"
           >
             <div className="relative rounded-2xl overflow-hidden mb-3">

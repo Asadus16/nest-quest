@@ -46,7 +46,7 @@ const HouseInfo = ({ houseInfo, houseInfoDetails, isLoading }) => {
       )}
 
       {/* Room Details Section */}
-      <RoomDetails />
+      <RoomDetails houseInfo={houseInfo} />
 
       {/* Additional Components */}
       <HouseDescription />
@@ -160,48 +160,99 @@ function cleanString(input) {
 }
 
 /* Host Section Component */
-const HostSection = ({ houseInfo, person }) => (
-  <div className="py-6 gap-8 items-center flex">
-    <img
-      className="h-10 w-10 object-cover rounded-full"
-      src={houseInfo?.host_image || person}
-      alt="host"
-    />
-    <div className="flex flex-col">
-      <span className="font-medium">
-        Hosted by{" "}
-        {houseInfo?.host_name ? cleanString(houseInfo?.host_name) : "Carl"}
-      </span>
-      <span className="font-extralight text-grey text-sm">6 years hosting</span>
-    </div>
-  </div>
-);
+const HostSection = ({ houseInfo, person }) => {
+  const hostName = houseInfo?.host_name ? cleanString(houseInfo?.host_name) : "Property Host";
+  // For backend properties, we don't have years hosting data
+  const isBackendProperty = houseInfo?.isBackendProperty;
 
-/* Room Details Section */
-const RoomDetails = () => (
-  <div className="py-8 flex border-b border-grey-dim flex-col gap-y-5">
-    <RoomDetailItem
-      icon={room}
-      title="Room in a villa"
-      description="Your own room in a home, plus access to shared spaces."
-    />
-    <RoomDetailItem
-      icon={sharedSpace}
-      title="Shared common spaces"
-      description="You’ll share parts of the home."
-    />
-    <RoomDetailItem
-      icon={bathroom}
-      title="Shared bathroom"
-      description="You’ll share the bathroom with others."
-    />
-    <RoomDetailItem
-      icon={furryFriend}
-      title="Furry friends welcome"
-      description="Bring your pets along for the stay."
-    />
-  </div>
-);
+  return (
+    <div className="py-6 gap-8 items-center flex">
+      <img
+        className="h-10 w-10 object-cover rounded-full"
+        src={houseInfo?.host_image || person}
+        alt="host"
+      />
+      <div className="flex flex-col">
+        <span className="font-medium">
+          Hosted by {hostName}
+        </span>
+        {!isBackendProperty && (
+          <span className="font-extralight text-grey text-sm">6 years hosting</span>
+        )}
+        {isBackendProperty && (
+          <span className="font-extralight text-grey text-sm">Professional host</span>
+        )}
+      </div>
+    </div>
+  );
+};
+
+/* Room Details Section - Dynamic based on property type */
+const RoomDetails = ({ houseInfo }) => {
+  // Get property type and format it
+  const propertyType = houseInfo?.type || 'property';
+  const formattedType = propertyType.charAt(0).toUpperCase() + propertyType.slice(1);
+
+  // Determine if property is entire place or shared
+  const isEntirePlace = ['apartment', 'villa', 'house', 'penthouse', 'townhouse'].includes(propertyType.toLowerCase());
+
+  // Check amenities for pet-friendly
+  const amenities = houseInfo?.amenitiesList || [];
+  const isPetFriendly = amenities.some(a => {
+    const name = (a.name || a || '').toLowerCase();
+    return name.includes('pet') || name.includes('dog') || name.includes('cat');
+  });
+
+  // Get bathroom count
+  const bathroomCount = houseInfo?.bathrooms || 1;
+
+  // Build dynamic room details
+  const roomDetails = [
+    {
+      icon: room,
+      title: isEntirePlace ? `Entire ${formattedType.toLowerCase()}` : `Room in a ${formattedType.toLowerCase()}`,
+      description: isEntirePlace
+        ? `You'll have the ${formattedType.toLowerCase()} to yourself.`
+        : 'Your own room in a home, plus access to shared spaces.',
+    },
+    {
+      icon: sharedSpace,
+      title: isEntirePlace ? 'Private spaces' : 'Shared common spaces',
+      description: isEntirePlace
+        ? 'All spaces in the property are for your exclusive use.'
+        : "You'll share parts of the home.",
+    },
+    {
+      icon: bathroom,
+      title: isEntirePlace ? `${bathroomCount} private bathroom${bathroomCount > 1 ? 's' : ''}` : 'Shared bathroom',
+      description: isEntirePlace
+        ? `This property has ${bathroomCount} bathroom${bathroomCount > 1 ? 's' : ''} for your exclusive use.`
+        : "You'll share the bathroom with others.",
+    },
+  ];
+
+  // Add pet-friendly if applicable
+  if (isPetFriendly) {
+    roomDetails.push({
+      icon: furryFriend,
+      title: 'Furry friends welcome',
+      description: 'Bring your pets along for the stay.',
+    });
+  }
+
+  return (
+    <div className="py-8 flex border-b border-grey-dim flex-col gap-y-5">
+      {roomDetails.map((detail, index) => (
+        <RoomDetailItem
+          key={index}
+          icon={detail.icon}
+          title={detail.title}
+          description={detail.description}
+        />
+      ))}
+    </div>
+  );
+};
 
 /* Reusable Room Detail Item Component */
 const RoomDetailItem = ({ icon, title, description }) => (
