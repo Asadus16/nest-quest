@@ -6,12 +6,15 @@ import { setActiveInput, setHoverInput } from "../../../redux/mainFormSlice";
 import AddGuest from "./FormFields/AddGuest";
 import searchIcon from "../../../asset/Icons_svg/search-icon.svg";
 import cross from "../../../asset/Icons_svg/cross.svg";
-import { setHitSearch, setMinimize } from "../../../redux/AppSlice";
+import { setHitSearch, setMinimize, setCity, setSelectedCountry, setBackendSearchResults, setUseBackendSearch } from "../../../redux/AppSlice";
+import { mapBackendPropertiesToFrontend } from "../../../utils/propertyMapper";
 import {
   handleSearch,
   useHandleCrossClick,
 } from "../../../hooks/MainFormContent";
 import { handleSearchInput } from "./HandleSearch";
+import { fetchBackendPropertiesWithFilters } from "../../../api/apiBackend";
+import { format } from "date-fns";
 
 // Custom hook to handle guest form state and actions
 const useGuestForm = () => {
@@ -20,7 +23,7 @@ const useGuestForm = () => {
   const { hitSearch } = useSelector((store) => store.app);
   const handleCrossClick = useHandleCrossClick();
 
-  const handleSearchClick = () => {
+  const handleSearchClick = async () => {
     const {
       region,
       dateOption,
@@ -33,6 +36,8 @@ const useGuestForm = () => {
       textForFlexibleInput,
       textForGuestInput,
       combinedString,
+      adultCount,
+      childCount,
     } = formState;
 
     if (formState.curSelectInput) {
@@ -55,6 +60,87 @@ const useGuestForm = () => {
     });
 
     handleSearchInput(region, destinationInputVal, combinedString, dispatch);
+    
+    // Extract city and country from search
+    let searchCity = null;
+    let searchCountry = null;
+    
+    if (region && region !== "all") {
+      // If region is selected, try to extract city/country
+      // This is a simple implementation - you may need to enhance this
+      searchCity = region;
+    } else if (destinationInputVal) {
+      searchCity = destinationInputVal;
+    }
+    
+    // Format dates for backend API
+    let checkInDate = null;
+    let checkOutDate = null;
+    
+    if (dateOption === "dates" && selectedStartDate && selectedEndDate) {
+      checkInDate = format(new Date(selectedStartDate), "yyyy-MM-dd");
+      checkOutDate = format(new Date(selectedEndDate), "yyyy-MM-dd");
+    }
+    
+    // Calculate max guests
+    const maxGuests = adultCount + childCount > 0 ? adultCount + childCount : null;
+    
+    // Call backend API with search filters
+    try {
+      const backendFilters = {
+        page: 1,
+        perPage: 15,
+        city: searchCity,
+        country: searchCountry,
+        checkIn: checkInDate,
+        checkOut: checkOutDate,
+        maxGuests: maxGuests,
+      };
+      
+      // Remove null/undefined values
+      Object.keys(backendFilters).forEach(key => {
+        if (backendFilters[key] === null || backendFilters[key] === undefined) {
+          delete backendFilters[key];
+        }
+      });
+      
+      console.log('🔍 [SEARCH] Calling backend API with filters:', backendFilters);
+      const backendResults = await fetchBackendPropertiesWithFilters(backendFilters);
+      console.log('✅ [SEARCH] Backend API response:', {
+        propertiesCount: backendResults.data?.length || 0,
+        meta: backendResults.meta,
+        firstProperty: backendResults.data?.[0] || null
+      });
+      
+      // Map backend properties to frontend format
+      if (backendResults.data && backendResults.data.length > 0) {
+        const mappedProperties = mapBackendPropertiesToFrontend(backendResults.data);
+        console.log('✅ [SEARCH] Mapped properties:', mappedProperties.length);
+        
+        // Store in Redux for display
+        dispatch(setBackendSearchResults(mappedProperties));
+        dispatch(setUseBackendSearch(true));
+      } else {
+        // No results, clear backend search
+        dispatch(setBackendSearchResults([]));
+        dispatch(setUseBackendSearch(false));
+      }
+      
+      // Update city and country in Redux for filtering
+      if (searchCity) {
+        dispatch(setCity(searchCity));
+      }
+      if (searchCountry) {
+        dispatch(setSelectedCountry(searchCountry));
+      }
+    } catch (error) {
+      console.error('❌ [SEARCH] Error fetching backend properties:', error);
+      console.error('Error details:', {
+        message: error.message,
+        stack: error.stack
+      });
+    }
+    
     dispatch(setMinimize(false));
   };
 

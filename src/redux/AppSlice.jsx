@@ -25,6 +25,8 @@ let appState = {
   showHostModal: false,
   hostModalStep: 1, // 1 = selection step, 2 = next step
   hostProgress: 0, // Progress percentage for host onboarding (0-100)
+  backendSearchResults: [], // Store backend search results
+  useBackendSearch: false, // Flag to use backend search results
 };
 
 const AppSlice = createSlice({
@@ -124,6 +126,12 @@ const AppSlice = createSlice({
     setHostProgress(state, action) {
       state.hostProgress = action.payload;
     },
+    setBackendSearchResults(state, action) {
+      state.backendSearchResults = action.payload;
+    },
+    setUseBackendSearch(state, action) {
+      state.useBackendSearch = action.payload;
+    },
   },
 });
 
@@ -153,6 +161,8 @@ export const {
   setShowHostModal,
   setHostModalStep,
   setHostProgress,
+  setBackendSearchResults,
+  setUseBackendSearch,
 } = AppSlice.actions;
 
 export default AppSlice.reducer;
