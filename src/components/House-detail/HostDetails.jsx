@@ -1,7 +1,13 @@
 import React from "react";
 import star from "../../asset/Icons_svg/star.svg";
 import { useSelector } from "react-redux";
+import { useParams } from "react-router";
 import person from "../../asset/person.svg";
+
+// Default values for Supabase properties (when we have historical data)
+const DEFAULT_REVIEWS = 1607;
+const DEFAULT_RATING = 4.34;
+const DEFAULT_YEARS_HOSTING = 6;
 
 const HostImage = ({ src, alt }) => (
   <div className="w-full flex justify-center items-end">
@@ -37,6 +43,7 @@ const HostInfo = ({
   rating,
   yearsHosting,
   starIcon,
+  isBackendProperty,
 }) => (
   <div className=" py-5 shadow-2xl rounded-3xl grid grid-cols-3">
     {/* Host Image & Name Section */}
@@ -49,26 +56,34 @@ const HostInfo = ({
     <div className="col-start-3 items-center justify-items-end grid grid-cols-1 col-end-4">
       <div className="w-24 flex flex-col justify-between h-44">
         {/* Reviews */}
-        <HostStats title="Reviews" value={reviews} />
+        <HostStats
+          title="Reviews"
+          value={isBackendProperty ? "New" : reviews}
+        />
         <Divider />
 
         {/* Rating */}
-        <HostStats title="Rating" value={rating}>
-          <div className="flex gap-[2px] items-center">
-            <img className="w-4 h-4" src={starIcon} alt="star-icon" />
-          </div>
+        <HostStats
+          title="Rating"
+          value={isBackendProperty ? "—" : rating}
+        >
+          {!isBackendProperty && (
+            <div className="flex gap-[2px] items-center">
+              <img className="w-4 h-4" src={starIcon} alt="star-icon" />
+            </div>
+          )}
         </HostStats>
         <Divider />
 
-        {/* Years Hosting */}
-        <HostStats title="Years hosting" value={yearsHosting} />
+        {/* Years Hosting / Status */}
+        <HostStats
+          title={isBackendProperty ? "Status" : "Years hosting"}
+          value={isBackendProperty ? "Verified" : yearsHosting}
+        />
       </div>
     </div>
   </div>
 );
-const reviews = 1607;
-const rating = 4.34;
-const yearsHosting = 6;
 
 function cleanString(input) {
   // Replace "About" with an empty string
@@ -122,18 +137,26 @@ const HostDescriptionSection = ({
 }) => {
   const displayHostName = houseInfo?.host_name
     ? cleanString(houseInfo?.host_name)
-    : "Carl";
+    : "Property Host";
+
+  // Use host_description if available, otherwise use space_description or notes as fallback
+  const descriptionText = houseInfo?.host_description ||
+                          houseInfo?.space_description ||
+                          houseInfo?.notes ||
+                          '';
+
+  const hasDescription = Boolean(descriptionText);
 
   return (
     <div
       className={`flex flex-col gap-y-5 justify-between ${
-        hostDescription ? "max-h-[24rem] h-full" : "max-h-[18rem] h-full"
+        hasDescription ? "max-h-[24rem] h-full" : "max-h-[18rem] h-full"
       }`}
     >
-      {hostDescription && (
+      {hasDescription && (
         <TextBlock
           title={`About ${displayHostName}`}
-          description={houseInfo?.host_description}
+          description={descriptionText}
           className="pt-14"
         />
       )}
@@ -141,7 +164,7 @@ const HostDescriptionSection = ({
       {/* Host Details */}
       <div
         className={`w-full ${
-          hostDescription ? "pt-5" : "1xz:pt-14"
+          hasDescription ? "pt-5" : "1xz:pt-14"
         } h-20 flex flex-col justify-between`}
       >
         <HostResponseInfo></HostResponseInfo>
@@ -156,12 +179,22 @@ const HostDescriptionSection = ({
 // Main
 
 const HostDetails = () => {
-  const houseInfo = useSelector((store) => store.houseDetail.houseInfo);
-  let hostDescription = Boolean(houseInfo?.host_description);
+  const { id } = useParams();
+  const allHouseInfo = useSelector((store) => store.houseDetail.houseInfo);
+  // Access houseInfo by id, fallback to direct access for backwards compatibility
+  const houseInfo = allHouseInfo?.[id] || allHouseInfo;
+
+  const isBackendProperty = houseInfo?.isBackendProperty || false;
+  const hostDescription = Boolean(houseInfo?.host_description);
   const hostImage = houseInfo?.host_image ? houseInfo?.host_image : person;
   const hostName = houseInfo?.host_name
     ? cleanString(houseInfo?.host_name)
-    : "Carl";
+    : "Property Host";
+
+  // Use default values for Supabase properties, different display for backend
+  const reviews = isBackendProperty ? "New" : DEFAULT_REVIEWS;
+  const rating = isBackendProperty ? "—" : DEFAULT_RATING;
+  const yearsHosting = isBackendProperty ? "Verified" : DEFAULT_YEARS_HOSTING;
 
   return (
     <div className="flex px-5 1smm:px-0 1xz:flex-row flex-col gap-y-10 py-10 gap-x-20 w-full   relative after:content-[''] after:absolute after:bottom-0 after:left-0 after:w-full after:h-[1px]  after:bg-grey-dim">
@@ -177,6 +210,7 @@ const HostDetails = () => {
           rating={rating}
           yearsHosting={yearsHosting}
           starIcon={star}
+          isBackendProperty={isBackendProperty}
         />
       </div>
       <HostDescriptionSection

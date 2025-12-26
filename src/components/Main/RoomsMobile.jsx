@@ -156,27 +156,36 @@ const MobileHouseCard = ({
 
   const handleMouseLeave = () => dispatch(setHoveredItem(null));
 
-  const renderHouseInfo = () => (
-    <div className="flex w-full justify-between items-start h-[25%]">
-      <div className="w-[80%]">
-        <p className="text-ellipsis whitespace-nowrap overflow-hidden text-[15px] w-[90%] font-medium">
-          {item["house-title"]}
-        </p>
-        <p className="font-light text-grey text-[15px]">
-          {Math.ceil(item.price / 83 + 150)} kilometers away
-        </p>
-        <p className="font-light text-grey text-[15px]">16-21 May</p>
-        <p className="text-[15px] font-medium">
-          AED {Math.ceil(item.price / 83)}
-          <span className="font-light text-[15px]"> night</span>
-        </p>
+  const renderHouseInfo = () => {
+    // Get price label based on property type
+    const getPriceLabel = () => {
+      if (item.priceType === 'month') return 'month';
+      if (item.priceType === 'total') return '';
+      return 'night';
+    };
+
+    return (
+      <div className="flex w-full justify-between items-start h-[25%]">
+        <div className="w-[80%]">
+          <p className="text-ellipsis whitespace-nowrap overflow-hidden text-[15px] w-[90%] font-medium">
+            {item["house-title"]}
+          </p>
+          <p className="font-light text-grey text-[15px]">
+            {item.city || 'Dubai'}, {item.country || 'UAE'}
+          </p>
+          <p className="font-light text-grey text-[15px]">{item.type ? item.type.charAt(0).toUpperCase() + item.type.slice(1) : 'Property'}</p>
+          <p className="text-[15px] font-medium">
+            AED {Math.ceil(item.price / 83)}
+            {getPriceLabel() && <span className="font-light text-[15px]"> {getPriceLabel()}</span>}
+          </p>
+        </div>
+        <Rating rating={item.house_rating} />
       </div>
-      <Rating rating={item.house_rating} />
-    </div>
-  );
+    );
+  };
 
   return (
-    <Link key={item.id} to={`/house/${item.id}`}>
+    <Link key={item.id} to={`/property/${item.id}`}>
       <motion.div
         className="1xl:w-full relative 1xl:h-full flex gap-y-4 items-center justify-center flex-col"
         onMouseLeave={handleMouseLeave}

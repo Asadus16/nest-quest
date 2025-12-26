@@ -15,38 +15,59 @@ const NavLink = ({ onClick, href, label }) => (
   </a>
 );
 
+// Helper to get price label based on priceType
+const getPriceLabel = (priceType) => {
+  if (priceType === 'month') return 'month';
+  if (priceType === 'total') return ''; // For sale properties, no suffix
+  return 'night'; // Default
+};
+
+// Helper to get the correct display price (rawPrice for backend, price for Supabase)
+const getDisplayPrice = (houseInfo) => {
+  if (houseInfo?.isBackendProperty && houseInfo?.rawPrice !== undefined) {
+    return houseInfo.rawPrice;
+  }
+  return houseInfo?.price;
+};
+
 // Component for showing the price and reviews section
-const PriceAndReviews = ({ houseInfo, houseRating, reviewsCount }) => (
-  <div className="h-full gap-5 flex items-center">
+const PriceAndReviews = ({ houseInfo, houseRating, reviewsCount }) => {
+  const priceLabel = getPriceLabel(houseInfo?.priceType);
+  const displayPrice = getDisplayPrice(houseInfo);
+
+  return (
+    <div className="h-full gap-5 flex items-center">
       <div className="flex flex-col justify-center gap-y-1">
         <div className="flex items-end gap-x-1">
-          <span className="font-medium text-base">AED {houseInfo?.price}</span>
-          <span className="text-sm font-light">night</span>
+          <span className="font-medium text-base">AED {displayPrice?.toLocaleString()}</span>
+          {priceLabel && <span className="text-sm font-light">{priceLabel}</span>}
         </div>
-      <div className="flex gap-x-1 items-center">
-        <img src={star} className="h-3 w-3" alt="Rating" />
-        <span className="text-xs font-medium">
-          {houseRating && formatSingleDigit(houseInfo?.house_rating)}
-        </span>
-        <span className="flex items-center justify-center">
-          <span className="w-[2px] h-[2px] bg-current rounded-full"></span>
-        </span>
-        <span className="text-xs font-extralight">
-          {reviewsCount && houseInfo?.rating_count}
-        </span>
+        <div className="flex gap-x-1 items-center">
+          <img src={star} className="h-3 w-3" alt="Rating" />
+          <span className="text-xs font-medium">
+            {houseRating && formatSingleDigit(houseInfo?.house_rating)}
+          </span>
+          <span className="flex items-center justify-center">
+            <span className="w-[2px] h-[2px] bg-current rounded-full"></span>
+          </span>
+          <span className="text-xs font-extralight">
+            {reviewsCount && houseInfo?.rating_count}
+          </span>
+        </div>
       </div>
+      <ReserveButton houseInfo={houseInfo} />
     </div>
-    <ReserveButton houseInfo={houseInfo} />
-  </div>
-);
+  );
+};
 
 // Component for the Reserve button
 const ReserveButton = ({ houseInfo }) => {
   const dispatch = useDispatch();
   let userData = useSelector((store) => store.app.userData);
-  
+  const priceType = houseInfo?.priceType || 'night';
+
   if (!houseInfo || !houseInfo.id) return null;
-  
+
   const handleClick = (e) => {
     if (!userData) {
       e.preventDefault();
@@ -54,10 +75,20 @@ const ReserveButton = ({ houseInfo }) => {
     }
   };
 
+  // Button label based on property type
+  const getButtonLabel = () => {
+    if (priceType === 'total') return 'Contact Agent';
+    if (priceType === 'month') return 'Inquire Now';
+    return 'Reserve';
+  };
+
+  // Only link to booking page for short-term rentals
+  const shouldLinkToBooking = priceType === 'night' && userData;
+
   return (
-    <Link to={userData ? `/${houseInfo.id}/book` : "#"} onClick={handleClick}>
+    <Link to={shouldLinkToBooking ? `/${houseInfo.id}/book` : "#"} onClick={handleClick}>
       <button className="rounded-full flex-center bg-black w-[9.5rem] h-12">
-        <span className="text-white">Reserve</span>
+        <span className="text-white">{getButtonLabel()}</span>
       </button>
     </Link>
   );
@@ -97,8 +128,10 @@ const NavbarChild = ({ isVisible, houseInfo }) => {
         {!isVisible && (
           <div className="flex flex-col justify-center gap-y-1">
             <div className="flex items-end gap-x-1">
-              <span className="font-medium text-base">AED {houseInfo?.price}</span>
-              <span className="text-sm font-light">night</span>
+              <span className="font-medium text-base">AED {getDisplayPrice(houseInfo)?.toLocaleString()}</span>
+              {getPriceLabel(houseInfo?.priceType) && (
+                <span className="text-sm font-light">{getPriceLabel(houseInfo?.priceType)}</span>
+              )}
             </div>
             <div className="flex gap-x-1 items-center">
               <img src={star} className="h-3 w-3" alt="Rating" />
@@ -159,26 +192,32 @@ const NavBar = () => {
   const houseInfo = allHouseInfo[id];
 
   useEffect(() => {
+    // Use hysteresis to prevent vibration - different thresholds for show/hide
+    const SHOW_THRESHOLD = 580; // Show navbar when scrolled past this point
+    const HIDE_THRESHOLD = 520; // Hide navbar when scrolled above this point
+
     function handleScroll() {
-      if (window.scrollY > 566) {
+      const scrollY = window.scrollY;
+
+      if (scrollY > SHOW_THRESHOLD && !showNav) {
         setShowNav(true);
-      } else {
+      } else if (scrollY < HIDE_THRESHOLD && showNav) {
         setShowNav(false);
       }
     }
 
-    window.addEventListener("scroll", handleScroll);
+    window.addEventListener("scroll", handleScroll, { passive: true });
 
     return () => {
       window.removeEventListener("scroll", handleScroll);
     };
-  }, []);
+  }, [showNav]);
 
   return (
     <div
-      className={`w-full   h-20 bg-white fixed top-0  z-50 ${
-        showNav ? "flex-center" : "hidden"
-      } border-b-[1px] border-b-grey-dim`}
+      className={`w-full h-20 bg-white fixed top-0 z-50 flex-center border-b-[1px] border-b-grey-dim transition-transform duration-300 ease-out ${
+        showNav ? "translate-y-0" : "-translate-y-full"
+      }`}
     >
       <NavbarChild isVisible={isVisible} houseInfo={houseInfo}></NavbarChild>
     </div>

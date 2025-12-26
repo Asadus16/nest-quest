@@ -11,7 +11,7 @@ import BottomMainCont from "./BottomMainCont";
 import NavBar from "./NavBar";
 import { getRoomInfo } from "../../api/apiRooms";
 import { getBackendPropertyById } from "../../api/apiBackend";
-import { mapBackendPropertyToFrontend, isBackendPropertyId } from "../../utils/propertyMapper";
+import { mapBackendPropertyToFrontend } from "../../utils/propertyMapper";
 import { useQuery } from "@tanstack/react-query";
 import { setHouseInfo, setIsLoading } from "../../redux/HouseDetailSlice";
 import LongFooter from "./LongFooter";
@@ -55,15 +55,60 @@ const scrollToSection = (sectionId) => {
   }
 };
 
+// Helper to get price label based on priceType
+const getPriceLabel = (priceType) => {
+  if (priceType === 'month') return 'month';
+  if (priceType === 'total') return ''; // For sale properties, no suffix
+  return 'night'; // Default
+};
+
+// Helper to get the correct display price (rawPrice for backend, price for Supabase)
+const getDisplayPrice = (houseInfo) => {
+  if (houseInfo?.isBackendProperty && houseInfo?.rawPrice !== undefined) {
+    return houseInfo.rawPrice;
+  }
+  return houseInfo?.price;
+};
+
 const PriceDetails = ({
   dateSelected,
   allHouseInfo,
   numOfDays,
   tripDurationDate,
+  houseInfo,
 }) => {
+  const priceType = houseInfo?.priceType || 'night';
+  const priceLabel = getPriceLabel(priceType);
+  const displayPrice = getDisplayPrice(houseInfo);
+
+  // For sale properties, show the asking price
+  if (priceType === 'total') {
+    return (
+      <div className="flex flex-col">
+        <span className="text-normal font-medium">
+          AED {displayPrice?.toLocaleString()}
+        </span>
+        <span className="text-sm font-light text-grey">For sale</span>
+      </div>
+    );
+  }
+
+  // For monthly rentals, show monthly price
+  if (priceType === 'month') {
+    return (
+      <div className="flex flex-col">
+        <span className="text-normal font-medium">
+          AED {displayPrice?.toLocaleString()} <span className="font-light text-sm">/ month</span>
+        </span>
+        <span className="text-sm font-light text-grey">Monthly rental</span>
+      </div>
+    );
+  }
+
+  // For short-term rentals
   const calculatePrice = () => {
     if (!dateSelected) return null;
-    const basePrice = Math.ceil(allHouseInfo?.price * Math.abs(numOfDays));
+    const basePrice = Math.ceil(displayPrice * Math.abs(numOfDays));
     const totalPrice = basePrice + Math.floor(0.1 * basePrice);
     return totalPrice;
   };
@@ -71,10 +116,10 @@ const PriceDetails = ({
   if (!dateSelected) return null;
 
   return (
-    <div className="flex  flex-col">
+    <div className="flex flex-col">
       {dateSelected && (
         <span className="text-normal font-medium">
-          AED {calculatePrice()} <span className="font-light text-sm">night</span>
+          AED {calculatePrice()} <span className="font-light text-sm">{priceLabel}</span>
         </span>
       )}
       {dateSelected ? (
@@ -100,28 +145,50 @@ const ActionButton = ({
   scrollToSection,
   dispatch,
 }) => {
+  const priceType = houseInfo?.priceType || 'night';
+
   const handleClick = (e) => {
+    // For sale and monthly rentals, just trigger login if not logged in
+    if (priceType === 'total' || priceType === 'month') {
+      if (!userData) {
+        e.preventDefault();
+        dispatch(setShowLogin(true));
+      }
+      return;
+    }
+
+    // For short-term rentals
     if (!dateSelected) {
       scrollToSection("calendar");
     } else {
       if (!userData) {
-        dispatch(setShowLogin(true)); // Show login modal
+        dispatch(setShowLogin(true));
       }
     }
   };
 
+  // Button label based on property type
+  const getButtonLabel = () => {
+    if (priceType === 'total') return 'Contact Agent';
+    if (priceType === 'month') return 'Inquire Now';
+    return dateSelected ? 'Reserve' : 'Check availability';
+  };
+
+  // Determine if button should link to booking page
+  const shouldLinkToBooking = priceType === 'night' && userData && dateSelected;
+
   return (
     <Link
-      to={userData && dateSelected ? `/${houseInfo?.id}/book` : "#"}
+      to={shouldLinkToBooking ? `/${houseInfo?.id}/book` : "#"}
       onClick={handleClick}
     >
       <button
         className={`${
-          dateSelected ? "px-10" : "px-6"
+          dateSelected || priceType !== 'night' ? "px-10" : "px-6"
         } rounded-lg flex-center bg-black h-12`}
       >
         <span className="text-white text-nowrap">
-          {dateSelected ? "Reserve" : "Check availability"}
+          {getButtonLabel()}
         </span>
       </button>
     </Link>
@@ -137,6 +204,8 @@ const FooterComponent = ({
   userData,
 }) => {
   const dispatch = useDispatch();
+  const priceType = houseInfo?.priceType || 'night';
+  const showRating = !dateSelected && priceType === 'night';
 
   return (
     <div className="w-full z-50 border-t border-grey-dim py-4 bg-white fixed bottom-0 justify-between px-5 flex 1xz:hidden">
@@ -145,8 +214,9 @@ const FooterComponent = ({
         allHouseInfo={allHouseInfo}
         numOfDays={numOfDays}
         tripDurationDate={tripDurationDate}
+        houseInfo={houseInfo}
       />
-      {!dateSelected && <RatingDisplay houseInfo={houseInfo} />}
+      {showRating && <RatingDisplay houseInfo={houseInfo} />}
       <ActionButton
         userData={userData}
         dateSelected={dateSelected}
@@ -177,22 +247,36 @@ const useScrollBehavior = (dispatch) => {
 };
 
 // Custom hook for handling house data
-const useHouseData = (id) => {
+const useHouseData = (id, existingHouseInfo) => {
   const dispatch = useDispatch();
-  const isBackend = isBackendPropertyId(id);
+
+  // Check if we already know the property type from Redux
+  const isKnownBackendProperty = existingHouseInfo?.isBackendProperty === true;
 
   const { isLoading, data } = useQuery({
     queryKey: ["roomInfo", id],
     queryFn: async () => {
-      // If it's a backend property, fetch from PMS backend
-      if (isBackend) {
+      // If we already have this property in Redux and know its type
+      if (isKnownBackendProperty) {
         const backendData = await getBackendPropertyById(id);
         if (backendData) {
           return mapBackendPropertyToFrontend(backendData);
         }
         return null;
       }
-      // Otherwise fetch from Supabase
+
+      // Try backend first (our primary data source)
+      try {
+        const backendData = await getBackendPropertyById(id);
+        if (backendData) {
+          return mapBackendPropertyToFrontend(backendData);
+        }
+      } catch (error) {
+        // Backend doesn't have this property, try Supabase
+        console.log('Property not found in backend, trying Supabase:', id);
+      }
+
+      // Fall back to Supabase
       return getRoomInfo(id);
     },
   });
@@ -200,11 +284,11 @@ const useHouseData = (id) => {
   useEffect(() => {
     if (data) {
       // Only apply Dubai branding to Supabase properties
-      const processedData = isBackend ? data : applyDubaiBranding(data);
+      const processedData = data.isBackendProperty ? data : applyDubaiBranding(data);
       dispatch(setHouseInfo({ id, data: processedData }));
       dispatch(setIsLoading(false));
     }
-  }, [data, dispatch, id, isBackend]);
+  }, [data, dispatch, id]);
 
   return { isLoading, data };
 };
@@ -253,7 +337,7 @@ const HouseDetail = () => {
   const headerRef = useRef();
   const [showNav, setShowNav] = useState(false);
 
-  const onHouseDetailPage = location.pathname.includes("/house/");
+  const onHouseDetailPage = location.pathname.includes("/property/");
   const sliceName = onHouseDetailPage ? "houseSlice" : "app";
 
   // Redux selectors
@@ -270,23 +354,29 @@ const HouseDetail = () => {
 
   // Custom hooks
   useScrollBehavior(dispatch);
-  useHouseData(id);
+  useHouseData(id, houseInfo);
 
   // Track scroll position to control navbar and header visibility
+  // Use hysteresis to prevent vibration - different thresholds for show/hide
   useEffect(() => {
+    const SHOW_THRESHOLD = 580;
+    const HIDE_THRESHOLD = 520;
+
     function handleScroll() {
-      if (window.scrollY > 566) {
+      const scrollY = window.scrollY;
+
+      if (scrollY > SHOW_THRESHOLD && !showNav) {
         setShowNav(true);
-      } else {
+      } else if (scrollY < HIDE_THRESHOLD && showNav) {
         setShowNav(false);
       }
     }
 
-    window.addEventListener("scroll", handleScroll);
+    window.addEventListener("scroll", handleScroll, { passive: true });
     return () => {
       window.removeEventListener("scroll", handleScroll);
     };
-  }, []);
+  }, [showNav]);
 
   useEffect(() => {
     updateBookingDates(id);

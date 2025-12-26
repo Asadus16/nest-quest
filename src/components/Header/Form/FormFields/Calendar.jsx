@@ -33,7 +33,7 @@ const Calendar = () => {
   const scrollContainerRef = useRef(null);
   const minimize = useSelector((store) => store.app.minimize);
   const location = useLocation();
-  let onHouseDetailPage = location.pathname.includes("/house/");
+  let onHouseDetailPage = location.pathname.includes("/property/");
   let onCheckOutPage = location.pathname.includes("/book");
   let onHomePage = location.pathname === "/";
 
