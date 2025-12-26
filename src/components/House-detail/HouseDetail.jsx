@@ -10,6 +10,8 @@ import BottomMainCont from "./BottomMainCont";
 
 import NavBar from "./NavBar";
 import { getRoomInfo } from "../../api/apiRooms";
+import { getBackendPropertyById } from "../../api/apiBackend";
+import { mapBackendPropertyToFrontend, isBackendPropertyId } from "../../utils/propertyMapper";
 import { useQuery } from "@tanstack/react-query";
 import { setHouseInfo, setIsLoading } from "../../redux/HouseDetailSlice";
 import LongFooter from "./LongFooter";
@@ -177,19 +179,32 @@ const useScrollBehavior = (dispatch) => {
 // Custom hook for handling house data
 const useHouseData = (id) => {
   const dispatch = useDispatch();
+  const isBackend = isBackendPropertyId(id);
 
   const { isLoading, data } = useQuery({
     queryKey: ["roomInfo", id],
-    queryFn: () => getRoomInfo(id),
+    queryFn: async () => {
+      // If it's a backend property, fetch from PMS backend
+      if (isBackend) {
+        const backendData = await getBackendPropertyById(id);
+        if (backendData) {
+          return mapBackendPropertyToFrontend(backendData);
+        }
+        return null;
+      }
+      // Otherwise fetch from Supabase
+      return getRoomInfo(id);
+    },
   });
 
   useEffect(() => {
     if (data) {
-      const branded = applyDubaiBranding(data);
-      dispatch(setHouseInfo({ id, data: branded }));
+      // Only apply Dubai branding to Supabase properties
+      const processedData = isBackend ? data : applyDubaiBranding(data);
+      dispatch(setHouseInfo({ id, data: processedData }));
       dispatch(setIsLoading(false));
     }
-  }, [data, dispatch, id]);
+  }, [data, dispatch, id, isBackend]);
 
   return { isLoading, data };
 };
